@@ -20,20 +20,14 @@ var parseGif = function(path, cb) {
     pos = 6
 
     // Logical screen width, 2 bits unsigned ints
-    var lsw = []
-    lsw[0] = buffer.readUInt8(pos)
+    gif.logical_screen_width = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
     pos++
-    lsw[1] = buffer.readUInt8(pos) << 8
     pos++
-    gif.logical_screen_width = lsw[1] + lsw[0]
 
     // Logical screen height, 2 bits unsigned ints
-    var lsh = []
-    lsh[0] = buffer.readUInt8(pos)
+    gif.logical_screen_height = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
     pos++
-    lsh[1] = buffer.readUInt8(pos) << 8
     pos++
-    gif.logical_screen_height = lsh[1] + lsh[0]
 
     // Following fields are packed
     //  Global color table flag 1 bit
