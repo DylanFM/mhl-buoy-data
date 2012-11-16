@@ -4,7 +4,7 @@
   "description": "MHL buoys track swell conditions off the coast of NSW Australia. This will parse their GIF graphs so the data can be used in other ways",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/test.js -R spec"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,10 @@
     "Australia"
   ],
   "author": "Dylan Fogarty-MacDonald",
-  "license": "BSD"
+  "license": "BSD",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "mocha": "~1.7.0"
+  }
 }
