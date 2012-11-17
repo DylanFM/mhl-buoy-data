@@ -65,7 +65,7 @@ var parseGif = function(path, cb) {
       // Global color table present, parse it
       gif.gct = []
 
-      var getGCTEntry = function(at) {
+      var getGCTEntry = function() {
         var rgb = []
         rgb.push(buffer[pos++])
         rgb.push(buffer[pos++])
