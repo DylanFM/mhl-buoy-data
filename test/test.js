@@ -14,11 +14,12 @@ describe('parseGif', function() {
       assert.equal(gif.logical_screen_height, 751)
 
       // NOTE I don't actually know what these values should be...
-      //      for now I'll assume it's OK. Will see later if I'm right
-      assert.equal(gif.gct_flag, true)
-      assert.equal(gif.color_res, 0)
-      assert.equal(gif.sort_flag, false)
-      assert.equal(gif.gct_size, 3)
+      assert.equal(gif.gct_flag, '')
+      assert.equal(gif.color_res, '')
+      assert.equal(gif.sort_flag, '')
+      assert.equal(gif.gct_size, '')
+      assert.equal(gif.bg_index, '')
+      assert.equal(gif.pixel_aspect_ratio, '')
 
       done()
     })

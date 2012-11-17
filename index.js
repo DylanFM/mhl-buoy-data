@@ -52,11 +52,32 @@ var parseGif = function(path, cb) {
     gif.gct_size = a.splice(0,3).reduce(function(s, n) {
       return s * 2 + n
     }, 0)
+    // "To determine that actual size of the color table, raise 2 to [the value of the field + 1]"
+    gif.gct_size = 1 << (gif.gct_size + 1) // "the number of bytes contained in the Global Color Table"
     pos++
 
-    // TODO make use of gct flag to know whether to expect gct now or not
+    gif.bg_index = buffer[pos]
+    pos++
+    gif.pixel_aspect_ratio = buffer[pos]
+    pos++
 
+    if (gif.gct_flag === true) {
+      // Global color table present, parse it
+      gif.gct = []
 
+      var getGCTEntry = function(at) {
+        var rgb = []
+        rgb.push(buffer[pos++])
+        rgb.push(buffer[pos++])
+        rgb.push(buffer[pos++])
+        return rgb
+      }
+
+      // In groups of 3 bytes (R G B), read gct_size bytes as the GCT
+      for (var i=gif.gct_size;i > 0;i--) {
+        gif.gct.push(getGCTEntry())
+      }
+    }
 
     cb(gif)
   })
