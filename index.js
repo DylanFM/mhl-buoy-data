@@ -60,6 +60,10 @@ var parseGif = function(path, cb) {
     gif.bg_index = buffer[pos]
     pos++
     gif.pixel_aspect_ratio = buffer[pos]
+    if (gif.pixel_aspect_ratio > 0) {
+      // Compute based on formula in gif spec 89a
+      gif.pixel_aspect_ratio = (gif.pixel_aspect_ratio + 15) / 16
+    }
     pos++
 
     if (gif.gct_flag === true) {
