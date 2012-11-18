@@ -1,5 +1,21 @@
-var parseGif = require('../')
+var parseGif = require('../gif')
+var parseMHLGraph = require('../')
 var assert = require('assert')
+
+describe('parseMHLGraph', function() {
+  it("parses the mhl buoy data graph", function(done) {
+    parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
+
+      assert.equal(conditions.direction, 135) // Degrees true north
+      assert.equal(conditions.max_size, 1.8) // Metres
+      assert.equal(conditions.sig_size, 1) // Metres
+      assert.equal(conditions.max_period, 5) // Seconds
+      assert.equal(conditions.sig_period, 6) // Seconds
+
+      done()
+    })
+  })
+})
 
 describe('parseGif', function() {
   it("should return pretty gif data", function(done) {
