@@ -5,8 +5,6 @@ describe('parseGif', function() {
   it("should return pretty gif data", function(done) {
     parseGif('./test/fixtures/pretty.gif', function(gif) {
 
-      console.log(gif)
-
       assert.equal(gif.signature, 'GIF')
       assert.equal(gif.version, '89a')
 
@@ -48,8 +46,6 @@ describe('parseGif', function() {
 
   it("should return wikipedia gif data", function(done) {
     parseGif('./test/fixtures/rainbow.gif', function(gif) {
-
-      console.log(gif)
 
       assert.equal(gif.signature, 'GIF')
       assert.equal(gif.version, '89a')
