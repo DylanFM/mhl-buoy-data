@@ -23,6 +23,15 @@ describe('parseGif', function() {
 
       assert.equal(gif.gct.length, gif.gct_size) // The actual size of GCT should match what the header says
 
+      // One frame that fills the logical screen
+      assert.equal(gif.images.length, 1)
+      assert.equal(gif.images[0].left_pos, 0)
+      assert.equal(gif.images[0].top_pos, 0)
+      assert.equal(gif.images[0].width, 3)
+      assert.equal(gif.images[0].height, 3)
+
+      assert.equal(gif.extensions.length, 2)
+
       done()
     })
   })

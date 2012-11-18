@@ -48,6 +48,22 @@ var parseGif = function(path, cb) {
       return str
     }
 
+    var parseCT = function(size) {
+      var ct = []
+      var getCTEntry = function() {
+        var rgb = []
+        rgb.push(buffer[pos++])
+        rgb.push(buffer[pos++])
+        rgb.push(buffer[pos++])
+        return rgb
+      }
+      // In groups of 3 bytes (R G B), read size bytes
+      for (var i=size;i > 0;i--) {
+        ct.push(getCTEntry())
+      }
+      return ct
+    }
+
     gif.signature = buffer.toString('utf8', 0, 3)
     gif.version = buffer.toString('utf8', 3, 6)
 
@@ -68,7 +84,7 @@ var parseGif = function(path, cb) {
     //  Color resolution 3 bits
     //  Sort flag 1 bit
     //  Size of GCT 3 bits
-    var packed = getPacked(buffer[pos])
+    var packed = getPacked(buffer[pos++])
     // Global color table flag:
     //  true:   No Global Color Table follows, the Background
     //          Color Index field is meaningless.
@@ -83,35 +99,19 @@ var parseGif = function(path, cb) {
     gif.gct_size = packed.splice(0,3).reduce(function(s, n) {
       return s * 2 + n
     }, 0)
-    // "To determine that actual size of the color table, raise 2 to [the value of the field + 1]"
-    gif.gct_size = Math.pow(2, gif.gct_size + 1) // "the number of bytes contained in the Global Color Table"
-    pos++
 
-    gif.bg_index = buffer[pos]
-    pos++
-    gif.pixel_aspect_ratio = buffer[pos]
+    gif.bg_index = buffer[pos++]
+    gif.pixel_aspect_ratio = buffer[pos++]
     if (gif.pixel_aspect_ratio > 0) {
       // Compute based on formula in gif spec 89a
       gif.pixel_aspect_ratio = (gif.pixel_aspect_ratio + 15) / 16
     }
-    pos++
 
     if (gif.gct_flag === true) {
+      // "To determine that actual size of the color table, raise 2 to [the value of the field + 1]"
+      gif.gct_size = Math.pow(2, gif.gct_size + 1) // "the number of bytes contained in the Global Color Table"
       // Global color table present, parse it
-      gif.gct = []
-
-      var getGCTEntry = function() {
-        var rgb = []
-        rgb.push(buffer[pos++])
-        rgb.push(buffer[pos++])
-        rgb.push(buffer[pos++])
-        return rgb
-      }
-
-      // In groups of 3 bytes (R G B), read gct_size bytes as the GCT
-      for (var i=gif.gct_size;i > 0;i--) {
-        gif.gct.push(getGCTEntry())
-      }
+      gif.gct = parseCT(gif.gct_size)
     }
 
     // Now we're up to the image descriptor(s)
@@ -129,7 +129,45 @@ var parseGif = function(path, cb) {
 
     var parseImage = function(complete) {
       var img = {}
+
       // Time to parse image 
+      img.left_pos = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
+      pos++
+      pos++
+      img.top_pos = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
+      pos++
+      pos++
+      img.width = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
+      pos++
+      pos++
+      img.height = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
+      pos++
+      pos++
+      var packed = getPacked(buffer[pos++])
+      // Packed bits:
+      //  - Local Color Table Flag        1 Bit
+      //  - Interlace Flag                1 Bit
+      //  - Sort Flag                     1 Bit
+      //  - Reserved                      2 Bits
+      //  - Size of Local Color Table     3 Bits
+      img.lct_flag = packed.shift()
+      img.interlace_flag = packed.shift()
+      img.sort_flag = packed.shift()
+      img.reserved = packed.splice(0, 2)
+      img.lct_size = packed.splice(0, 3).reduce(function(s, n) {
+        return s * 2 + n
+      }, 0)
+      if (img.lct_flag === true) {
+        // "To determine that actual size of the color table, raise 2 to [the value of the field + 1]"
+        img.lct_size = Math.pow(2, img.lct_size + 1) // "the number of bytes contained in the Global Color Table"
+        // Global color table present, parse it
+        img.lct = parseCT(img.lct_size)
+      }
+
+      // Now we get LZW data
+      img.lzw_min_code_size = buffer[pos++]
+      img.lzw_data = readSubBlocks()
+
       complete(img)
     }
 
@@ -149,7 +187,7 @@ var parseGif = function(path, cb) {
           //  - User Input Flag               1 Bit
           //  - Transparent Color Flag        1 Bit
           ext.reserved = packed.splice(0, 3)
-          ext.disposal_method = packed.splice(0,3).reduce(function(s, n) {
+          ext.disposal_method = packed.splice(0, 3).reduce(function(s, n) {
             return s * 2 + n
           }, 0)
           ext.user_input = packed.shift()
