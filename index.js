@@ -50,6 +50,12 @@ var parseMHLGraph = function(path, cb) {
         cb([x,y])
     }
 
+    var scanForData = function(x, y, colours, cb) {
+      var px = getPixel(gif, x, y)
+      if (_.contains(colours, px))
+        cb({ coords: [x,y], colour: px })
+    }
+
     // Find the scale for the metres y-axis
     // Top y-axis runs from 50,314 up to 50,129
     // Scan along there, but just to the left and log any segments
@@ -75,6 +81,34 @@ var parseMHLGraph = function(path, cb) {
       })
     }
     console.log('s segs: ', secondSegments)
+
+    // Let's find the latest data
+    // For each graph, we want to have the coordinates to the most recent point of the lines
+    // 1st of all, the top graph
+    // Scan backwards from the right-hand axis to find the 1st instances of lines
+    var data = []
+    var x = 543
+    while(!data.length) {
+      for(var y=313;y>66;y--) {
+        scanForData(x, y, [colours.blue, colours.red, colours.green], function(point) {
+          data.push(point)
+        })
+      }
+      x--
+    }
+    console.log('top data: ', data)
+    // And now the bottom graph
+    var data = []
+    var x = 543
+    while(!data.length) {
+      for(var y=700;y>390;y--) {
+        scanForData(x, y, [colours.red, colours.green], function(point) {
+          data.push(point)
+        })
+      }
+      x--
+    }
+    console.log('bottom data: ', data)
 
     cb(conditions)
   })
