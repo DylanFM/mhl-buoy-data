@@ -20,6 +20,7 @@
   "author": "Dylan Fogarty-MacDonald",
   "license": "BSD",
   "dependencies": {
+    "underscore": "~1.4.2"
   },
   "devDependencies": {
     "mocha": "~1.7.0"
