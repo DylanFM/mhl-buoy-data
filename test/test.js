@@ -3,6 +3,10 @@ var parseMHLGraph = require('../')
 var assert = require('assert')
 
 describe('parseMHLGraph', function() {
+  it("gets pixel", function() {
+    // Imagine a 4x4 grid, as a 1-dimensional array
+  })
+
   it("parses the mhl buoy data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
 
