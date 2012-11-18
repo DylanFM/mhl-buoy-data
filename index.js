@@ -13,6 +13,7 @@ var _ = require('underscore')
 // Period of the peak of the energy spectrum.
 
 // Return the value for the pixel
+// NOTE pull into gif library when that's extracted
 var getPixel = function(gif, x, y) {
   // Gif data isn't split into rows and columns
   // To get to X col and Y row, what index?
@@ -26,6 +27,9 @@ var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
     var conditions = {},
         colours = {},
+        metreSegments = [],
+        secondSegments = [],
+        directionSegments = [],
         strGct
         
     // NOTE assumption - checking colours manually, expecting no changes
@@ -34,30 +38,43 @@ var parseMHLGraph = function(path, cb) {
     colours.blue  = _.indexOf(strGct, [0,0,230].join(''))
     colours.red   = _.indexOf(strGct, [230,0,0].join(''))
     colours.green = _.indexOf(strGct, [0,200,0].join(''))
+    colours.black = _.indexOf(strGct, [0,0,0].join(''))
 
     console.log(colours)
 
-    
-    for(var x=280;x<300;x++) {
-      for(var y=265;y<285;y++) {
-        var px = getPixel(gif,x,y)
-        if (px !== 0)
-          console.log('at x: ',x,' y: ',y,' index: ',px)
-      }
+    // We want to be able to have pixel coordinates and get an associated value
+
+    var scanForSeg = function(x, y, colour, cb) {
+      var px = getPixel(gif, x, y)
+      if (px === colour)
+        cb([x,y])
     }
 
-
-    // Testing 292,235 should be blue
-    //         292,246 red
-    //         292,274 green
-    console.log("should be blue", getPixel(gif,292,234))
-    console.log("should be red", getPixel(gif,292,246))
-    console.log("should be green", getPixel(gif,292,274))
-    
-    // We want to be able to have pixel coordinates and get an associated value
     // Find the scale for the metres y-axis
+    // Top y-axis runs from 50,314 up to 50,129
+    // Scan along there, but just to the left and log any segments
+    for (var y=315;y>128;y--) {
+      scanForSeg(49, y, colours.black, function(coords) {
+        metreSegments.push(coords)
+      })
+    }
+    console.log('m segs: ', metreSegments)
     // Find the scale for the direction y-axis
+    // From 544,314 to 544,67
+    for (var y=315;y>66;y--) {
+      scanForSeg(545, y, colours.blue, function(coords) {
+        directionSegments.push(coords)
+      })
+    }
+    console.log('dir segs: ', directionSegments)
     // Find the scale for the seconds y-axis
+    // From 50,701 to 50,391
+    for (var y=702;y>390;y--) {
+      scanForSeg(49, y, colours.black, function(coords) {
+        secondSegments.push(coords)
+      })
+    }
+    console.log('s segs: ', secondSegments)
 
     cb(conditions)
   })
