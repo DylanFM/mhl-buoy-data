@@ -128,8 +128,9 @@ var parseGif = function(path, cb) {
     gif.extensions = []
 
     var parseImage = function(complete) {
-      gif.images.push('image')
-      complete()
+      var img = {}
+      // Time to parse image 
+      complete(img)
     }
 
     var parseExtension = function(complete) {
@@ -153,10 +154,11 @@ var parseGif = function(path, cb) {
           }, 0)
           ext.user_input = packed.shift()
           ext.transparency_given = packed.shift()
-          ext.delay_time = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8)
+          ext.delay_time = buffer.readUInt8(pos) + (buffer.readUInt8(pos+1) << 8) // No. 1/100s to wait
+          pos++
           pos++
           ext.transparency_index = buffer[pos++]
-          ext.terminator = buffer[pos++]
+          pos++ // terminator
           break
         case 0xFE:
           // Comment extension
@@ -207,9 +209,9 @@ var parseGif = function(path, cb) {
             parseBlocks(eof)
           })
           break
-        // case ';': // End of file
-        //   eof(gif)
-        //   break
+        case 0x3B: // End of file
+          eof(gif)
+          break
         default:
           console.log('Unknown block: ' + id + ' (' + String.fromCharCode(id) + ')')
           eof(gif)
