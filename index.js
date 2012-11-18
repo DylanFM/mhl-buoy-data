@@ -176,7 +176,6 @@ var parseGif = function(path, cb) {
           ext.identifier = read(8)
           ext.authentication_code = read(3)
           ext.data = readSubBlocks()
-          ext.terminator = buffer[pos++]
           break
         default:
           console.log('Unknown extension: ' + id)
@@ -191,8 +190,8 @@ var parseGif = function(path, cb) {
     // When there isn't an identified block, call the callback
     var parseBlocks = function(eof) {
       var id = buffer[pos++]
-      switch(String.fromCharCode(id)) {
-        case '!': // Extension
+      switch(id) {
+        case 0x21: // Extension
           parseExtension(function(ext) {
             // Add extension to gif object
             gif.extensions.push(ext)
@@ -200,7 +199,7 @@ var parseGif = function(path, cb) {
             parseBlocks(eof)
           })
           break
-        case ',': // Image
+        case 0x2C: // Image
           parseImage(function(img) {
             // Add extension to gif object
             gif.images.push(img)
@@ -208,11 +207,11 @@ var parseGif = function(path, cb) {
             parseBlocks(eof)
           })
           break
-        case ';': // End of file
-          eof(gif)
-          break
+        // case ';': // End of file
+        //   eof(gif)
+        //   break
         default:
-          console.log('Unknown block: ' + id)
+          console.log('Unknown block: ' + id + ' (' + String.fromCharCode(id) + ')')
           eof(gif)
       }
     }
