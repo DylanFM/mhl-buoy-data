@@ -47,13 +47,14 @@ var parseGif = function(path, cb) {
     gif.gct_flag = a.shift()
     gif.color_res = a.splice(0,3).reduce(function(s, n) {
       return s * 2 + n
-    }, 0)
+    }, 0) // Number of bits per primary color available to the original image (minus 1)
+    gif.color_res++ // Add 1 to get correct value
     gif.sort_flag = a.shift()
     gif.gct_size = a.splice(0,3).reduce(function(s, n) {
       return s * 2 + n
     }, 0)
     // "To determine that actual size of the color table, raise 2 to [the value of the field + 1]"
-    gif.gct_size = 1 << (gif.gct_size + 1) // "the number of bytes contained in the Global Color Table"
+    gif.gct_size = Math.pow(2, gif.gct_size + 1) // "the number of bytes contained in the Global Color Table"
     pos++
 
     gif.bg_index = buffer[pos]
