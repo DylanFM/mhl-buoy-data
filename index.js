@@ -47,7 +47,6 @@ var parseGif = function(path, cb) {
         blocks.push(readBytes(size))
         size = buffer[pos++]
       }
-      console.log(blocks)
       return blocks
     }
 
@@ -58,7 +57,6 @@ var parseGif = function(path, cb) {
       while (size !== 0) {
         d = read(size)
         str += d
-        //console.log(d, size)
         size = buffer[pos++]
       } 
       return str
@@ -251,15 +249,8 @@ var parseGif = function(path, cb) {
 
       // Now we get LZW data
       img.lzw_min_code_size = buffer[pos++]
-      var data = readSubBlocksAsStr()
-      //LZWAsync.decompress({
-      //  input: readSubBlocksAsStr(),
-      //  output: function(data) {
-          img.data = lzwDecode(img.lzw_min_code_size, data)
-          console.log(img.data)
-          complete(img)
-      //  }
-      //})
+      img.data = lzwDecode(img.lzw_min_code_size, readSubBlocksAsStr())
+      complete(img)
     }
 
     var parseExtension = function(complete) {

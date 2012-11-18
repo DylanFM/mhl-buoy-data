@@ -31,6 +31,11 @@ describe('parseGif', function() {
       assert.equal(gif.images[0].top_pos, 0)
       assert.equal(gif.images[0].width, 3)
       assert.equal(gif.images[0].height, 3)
+      assert.equal(gif.images[0].lct_flag, false)
+      assert.equal(gif.images[0].interlace_flag, false)
+      assert.equal(gif.images[0].sort_flag, false)
+      assert.equal(gif.images[0].lct_size, 0)
+      assert.equal(gif.images[0].lzw_min_code_size, 3)
       // 3 rows of 3 columns with indexes relating to the colour they are
       assert.deepEqual(gif.images[0].data, [3,4,1,4,2,5,0,5,4])
 
