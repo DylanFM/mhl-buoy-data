@@ -20,6 +20,7 @@
   "author": "Dylan Fogarty-MacDonald",
   "license": "BSD",
   "dependencies": {
+    "lzw-async": "~0.1.3"
   },
   "devDependencies": {
     "mocha": "~1.7.0"

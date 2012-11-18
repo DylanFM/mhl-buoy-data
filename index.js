@@ -35,16 +35,32 @@ var parseGif = function(path, cb) {
       for (var i = 0;i < n;i++) {
         str += String.fromCharCode(buffer[pos++])
       }
+      //var str = buffer.toString('utf8', pos-1, (pos-1+n))
+      //pos += n
       return str 
     }
 
     var readSubBlocks = function() {
-      var str = 0,
-          size
-      do {
+      var blocks = [], 
+          size = buffer[pos++]
+      while (size !== 0) {
+        blocks.push(readBytes(size))
         size = buffer[pos++]
-        str += read(size)
-      } while (size !== 0)
+      }
+      console.log(blocks)
+      return blocks
+    }
+
+    var readSubBlocksAsStr = function() {
+      var str = '', 
+          size = buffer[pos++],
+          d
+      while (size !== 0) {
+        d = read(size)
+        str += d
+        //console.log(d, size)
+        size = buffer[pos++]
+      } 
       return str
     }
 
@@ -127,6 +143,75 @@ var parseGif = function(path, cb) {
     gif.images = []
     gif.extensions = []
 
+  // Copied from https://github.com/shachaf/jsgif/
+  var lzwDecode = function(minCodeSize, data) {
+    // TODO: Now that the GIF parser is a bit different, maybe this should get an array of bytes instead of a String?
+    var p = 0; // Maybe this streaming thing should be merged with the Stream?
+    var readCode = function(size) {
+        var code = 0;
+        for (var i = 0; i < size; i++) {
+          if (data.charCodeAt(p >> 3) & (1 << (p & 7))) {
+            code |= 1 << i;
+          }
+          p++;
+        }
+        return code;
+      };
+
+    var output = [];
+
+    var clearCode = 1 << minCodeSize;
+    var eoiCode = clearCode + 1;
+
+    var codeSize = minCodeSize + 1;
+
+    var dict = [];
+
+    var clear = function() {
+        dict = [];
+        codeSize = minCodeSize + 1;
+        for (var i = 0; i < clearCode; i++) {
+          dict[i] = [i];
+        }
+        dict[clearCode] = [];
+        dict[eoiCode] = null;
+
+      };
+
+    var code;
+    var last;
+
+    while (true) {
+      last = code;
+      code = readCode(codeSize);
+
+      if (code === clearCode) {
+        clear();
+        continue;
+      }
+      if (code === eoiCode) break;
+
+      if (code < dict.length) {
+        if (last !== clearCode) {
+          dict.push(dict[last].concat(dict[code][0]));
+        }
+      } else {
+        if (code !== dict.length) throw new Error('Invalid LZW code.');
+        dict.push(dict[last].concat(dict[last][0]));
+      }
+      output.push.apply(output, dict[code]);
+
+      if (dict.length === (1 << codeSize) && codeSize < 12) {
+        // If we're at the last code and codeSize is 12, the next code will be a clearCode, and it'll be 12 bits long.
+        codeSize++;
+      }
+    }
+
+    // I don't know if this is technically an error, but some GIFs do it.
+    //if (Math.ceil(p / 8) !== data.length) throw new Error('Extraneous LZW bytes.');
+    return output;
+  };
+
     var parseImage = function(complete) {
       var img = {}
 
@@ -166,9 +251,15 @@ var parseGif = function(path, cb) {
 
       // Now we get LZW data
       img.lzw_min_code_size = buffer[pos++]
-      img.lzw_data = readSubBlocks()
-
-      complete(img)
+      var data = readSubBlocksAsStr()
+      //LZWAsync.decompress({
+      //  input: readSubBlocksAsStr(),
+      //  output: function(data) {
+          img.data = lzwDecode(img.lzw_min_code_size, data)
+          console.log(img.data)
+          complete(img)
+      //  }
+      //})
     }
 
     var parseExtension = function(complete) {
@@ -201,13 +292,13 @@ var parseGif = function(path, cb) {
         case 0xFE:
           // Comment extension
           ext.type = 'comment'
-          ext.comment = readSubBlocks()
+          ext.comment = readSubBlocksAsStr()
           break
         case 0x01:
           // Plain text extension
           ext.type = 'plaintext'
           ext.header = read(12)
-          ext.data = readSubBlocks()
+          ext.data = readSubBlocksAsStr()
           break
         case 0xFF:
           // App extension
@@ -215,7 +306,7 @@ var parseGif = function(path, cb) {
           ext.block_size = buffer[pos++]
           ext.identifier = read(8)
           ext.authentication_code = read(3)
-          ext.data = readSubBlocks()
+          ext.data = readSubBlocksAsStr()
           break
         default:
           console.log('Unknown extension: ' + id)

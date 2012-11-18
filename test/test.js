@@ -23,14 +23,16 @@ describe('parseGif', function() {
 
       assert.equal(gif.gct.length, gif.gct_size) // The actual size of GCT should match what the header says
 
+      assert.equal(gif.extensions.length, 2)
+
       // One frame that fills the logical screen
       assert.equal(gif.images.length, 1)
       assert.equal(gif.images[0].left_pos, 0)
       assert.equal(gif.images[0].top_pos, 0)
       assert.equal(gif.images[0].width, 3)
       assert.equal(gif.images[0].height, 3)
-
-      assert.equal(gif.extensions.length, 2)
+      // 3 rows of 3 columns with indexes relating to the colour they are
+      assert.deepEqual(gif.images[0].data, [3,4,1,4,2,5,0,5,4])
 
       done()
     })
