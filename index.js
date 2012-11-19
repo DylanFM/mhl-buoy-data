@@ -59,7 +59,7 @@ var parseMHLGraph = function(path, cb) {
     // Top y-axis runs from 50,314 up to 50,129
     // Scan along there, but just to the left and log any segments
     // NOTE 129 may not be right. Sometimes the axis is shorter/longer
-    //      We should actually go to 50x and scan up from 315 to see when the solid black line
+    //      We should actually go to 50x and scan upwards from 315y to see when the solid black line
     //      finishes, then we know where to scan to for the segments and how to form the %
     for (var y=315;y>128;y--) {
       scanForSeg(49, y, colours.black, function(coords) {
@@ -156,9 +156,10 @@ var parseMHLGraph = function(path, cb) {
     // We need to know the top and bottom values from each y-axis
     // The metre and second axises change according to the graph's content, but the direction doesn't
     // Let's begin with the direction value
+    var directionAxis = { min: 0, max: 360 } // safe assumption
     if (directionsPoint) {
       // So we know top is 360, bottom is 0. Percentage in point means its value is % of 360
-      conditions.direction = parseFloat(((directionsPoint.percent/100)*360).toFixed(2), 10)
+      conditions.direction = parseFloat(((directionsPoint.percent/100)*(directionAxis.max - directionAxis.min)).toFixed(2), 10) + directionAxis.min
     }
     // Let's try swell size...
     // NOTE Assumption alert
@@ -170,25 +171,24 @@ var parseMHLGraph = function(path, cb) {
     //      add a row above 360's on the right. We need a way of determining values by
     //      reading segment counts and possibly looking at layout.
     //      Build up fixtures for testing, especially when the surf is huge and tiny
+    var metreAxis = { min: 0, max: 8 } // hard-coding an assumption. We should be calculating this.
     if (hsigPoint) {
-      // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
-      conditions.hsig = parseFloat(((hsigPoint.percent/100)*8).toFixed(2), 10)
+      conditions.hsig = parseFloat(((hsigPoint.percent/100)*(metreAxis.max - metreAxis.min)).toFixed(2), 10) + metreAxis.min
     }
     if (hmaxPoint) {
-      // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
-      conditions.hmax = parseFloat(((hmaxPoint.percent/100)*8).toFixed(2), 10)
+      conditions.hmax = parseFloat(((hmaxPoint.percent/100)*(metreAxis.max - metreAxis.min)).toFixed(2), 10) + metreAxis.min
     }
     // OK, now for period in the graph below
     // NOTE Assumption alert
     //      I'm just going to say that this is going from 4 seconds to 14 seconds
     //      This certainly isn't always the case, but for now it will work
     //      until I make things a bit more complex here
+    var secondsAxis = { min: 4, max: 14 } // hard-coding an assumption. We should be calculating this.
     if (tsigPoint) {
-      // 10 isn't 14, but the scale begins at 4, so I'll add 4
-      conditions.tsig = parseFloat(((tsigPoint.percent/100)*10).toFixed(2),10) + 4
+      conditions.tsig = parseFloat(((tsigPoint.percent/100)*(secondsAxis.max - secondsAxis.min)).toFixed(2),10) + secondsAxis.min
     }
     if (tp1Point) {
-      conditions.tp1 = parseFloat(((tp1Point.percent/100)*10).toFixed(2),10) + 4
+      conditions.tp1 = parseFloat(((tp1Point.percent/100)*(secondsAxis.max - secondsAxis.min)).toFixed(2),10) + secondsAxis.min
     }
 
     cb(conditions)
