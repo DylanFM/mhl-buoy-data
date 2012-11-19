@@ -70,6 +70,14 @@ var getLatestData = function(gif, fromX, bottomY, topY, colours) {
   return data
 }
 
+var seekUpToNoColour = function(gif, x, y, colour) {
+  var px
+  do {
+    px = getPixel(gif, x, y--)
+  } while (px === colour)
+  return [x, y]
+}
+
 // Parse requested graph...
 var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
@@ -114,17 +122,18 @@ var parseMHLGraph = function(path, cb) {
     //      reading segment counts and possibly looking at layout.
     //      Build up fixtures for testing, especially when the surf is huge and tiny
     // Top y-axis runs from 50,314 up to 50,129
-    // NOTE 129 may not be right. Sometimes the axis is shorter/longer
-    //      We should actually go to 50x and scan upwards from 315y to see when the solid black line
-    //      finishes, then we know where to scan to for the segments and how to form the %
+
     metreAxis = { 
       min: 0, 
       max: 8, 
       x: 50,
-      bottomY: 314,
-      topY: 129 
+      bottomY: 314
     }        
-    metreAxis.length = metreAxis.bottomY-directionAxis.topY // Swapped to direction scale, as we're using that at the moment
+
+    // Go to 50x and scan upwards from 315y to see when the solid black line
+    // finishes and use that y position as the topY
+    metreAxis.topY  = seekUpToNoColour(gif, metreAxis.x, metreAxis.bottomY, colours.black)[1] + 1 // Subtract 1 as it returns the 1st non-black cell
+    metreAxis.length = metreAxis.bottomY-directionAxis.topY // NOTE Swapped to direction scale, as we're using that at the moment
     metreAxis.segments = getAxisSegments(gif, metreAxis.x-1, metreAxis.bottomY, metreAxis.topY, colours.black)
 
     // NOTE Assumption alert
