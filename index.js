@@ -148,10 +148,9 @@ var parseMHLGraph = function(path, cb) {
     //      up to 8 metres. When 8 is shown, it's equal to 360. So, for now I'm going to
     //      parse it like the direction value and work out a value as a percentage of 8.
     // TODO don't rely on this. If it goes up to 10 metres, then it's probably going to 
-    //      add a row above 360's on the right. We need a way of determining values by
+    //      add a row above 360. We need a way of determining values by
     //      reading segment counts and possibly looking at layout.
     //      Build up fixtures for testing, especially when the surf is huge and tiny
-    // Top y-axis runs from 50,314 up to 50,129
 
     metreAxis = { 
       min: 0, 
@@ -165,15 +164,9 @@ var parseMHLGraph = function(path, cb) {
     metreAxis.length = metreAxis.bottomY-directionAxis.topY // NOTE Swapped to direction scale, as we're using that at the moment
     metreAxis.segments = getAxisSegments(gif, metreAxis.x-1, metreAxis.bottomY, metreAxis.topY, colours.black)
 
-    // NOTE Assumption alert
-    //      I'm just going to say that this is going from 4 seconds to 14 seconds
-    //      This certainly isn't always the case, but for now it will work
-    //      until I make things a bit more complex here
-    // From 50,701 to 50,391
-    // NOTE like the metre y-axis, this needs to be refactored to allow for different lengths
+    // Work out seconds axis
     secondAxis = {
       min: 4, 
-      max: 14, 
       x: 50
     }        
     // The second axis is tricky... it changes the height of the image, changes min and max and so on
@@ -186,6 +179,33 @@ var parseMHLGraph = function(path, cb) {
     // Now we can calculate the correct length and fetch segments
     secondAxis.length = secondAxis.bottomY-secondAxis.topY
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
+
+    // NOTE Assumption alert
+    //      We're leaving the min period as 4. I haven't seen that change yet. Appears they only add rows when the period grows
+    // Some of this will be hard-coded, based on examples I've seen
+    // Handle max of 10, 12 and 14 for now (the only examples we have). Will add a couple of others following the pattern
+    switch (secondAxis.segments.length) {
+      case 14:
+        secondAxis.max = 18
+        break
+      case 12:
+        secondAxis.max = 16
+        break
+      case 10:
+        secondAxis.max = 14
+        break
+      case 8:
+        secondAxis.max = 12
+        break
+      case 6:
+        secondAxis.max = 10
+        break
+      case 4:
+        secondAxis.max = 8
+        break
+      default:
+        throw new Error("Don't recognise seconds axis. " + secondAxis.segments.length + " segments present.")
+    }
 
     console.log(secondAxis)
 
