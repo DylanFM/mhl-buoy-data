@@ -3,20 +3,16 @@ var parseMHLGraph = require('../')
 var assert = require('assert')
 
 describe('parseMHLGraph', function() {
-  it("gets pixel", function() {
-    // Imagine a 4x4 grid, as a 1-dimensional array
-  })
-
   it("parses the mhl buoy data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
 
       console.log(conditions)
 
       assert.equal(conditions.direction, 136.8) // Degrees true north
-      assert.equal(conditions.max_size, 1.8) // Metres
-      assert.equal(conditions.sig_size, 1) // Metres
-      assert.equal(conditions.max_period, 5) // Seconds
-      assert.equal(conditions.sig_period, 6) // Seconds
+      assert.equal(conditions.hmax, 1.8) // Metres
+      assert.equal(conditions.hsig, 1) // Metres
+      assert.equal(conditions.tp1, 5) // Seconds
+      assert.equal(conditions.tsig, 6) // Seconds
 
       done()
     })

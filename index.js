@@ -60,6 +60,9 @@ var parseMHLGraph = function(path, cb) {
     // Find the scale for the metres y-axis
     // Top y-axis runs from 50,314 up to 50,129
     // Scan along there, but just to the left and log any segments
+    // NOTE 129 may not be right. Sometimes the axis is shorter/longer
+    //      We should actually go to 50x and scan up from 315 to see when the solid black line
+    //      finishes, then we know where to scan to for the segments and how to form the %
     for (var y=315;y>128;y--) {
       scanForSeg(49, y, colours.black, function(coords) {
         metreSegments.push(coords)
@@ -69,6 +72,7 @@ var parseMHLGraph = function(path, cb) {
     console.log('m segs: ', metreSegments)
     // Find the scale for the direction y-axis
     // From 544,314 to 544,67
+    // NOTE unlike the LHS y-axes, this shouldn't change
     for (var y=315;y>66;y--) {
       scanForSeg(545, y, colours.blue, function(coords) {
         directionSegments.push(coords)
@@ -78,6 +82,7 @@ var parseMHLGraph = function(path, cb) {
     console.log('dir segs: ', directionSegments)
     // Find the scale for the seconds y-axis
     // From 50,701 to 50,391
+    // NOTE like the metre y-axis, this needs to be refactored to allow for different lengths
     for (var y=702;y>390;y--) {
       scanForSeg(49, y, colours.black, function(coords) {
         secondSegments.push(coords)
@@ -151,15 +156,41 @@ var parseMHLGraph = function(path, cb) {
     console.log('topData: ', topData)
     console.log('bottomData: ', bottomData)
 
+    var directionsPoint  =  _.find(topData, function(p) { return p.colour === colours.blue }),
+        hsigPoint        =  _.find(topData, function(p) { return p.colour === colours.green }),
+        hmaxPoint        =  _.find(topData, function(p) { return p.colour === colours.red }),
+        tsigPoint        =  _.find(bottomData, function(p) { return p.colour === colours.green }),
+        tp1Point         =  _.find(bottomData, function(p) { return p.colour === colours.red })
+
     // We want to store the values of the different data points in the conditions object
     // We need to know the top and bottom values from each y-axis
     // The metre and second axises change according to the graph's content, but the direction doesn't
     // Let's begin with the direction value
-    var directionsPoint = _.find(topData, function(p) { return p.colour === colours.blue })
     if (directionsPoint) {
       // So we know top is 360, bottom is 0. Percentage in point means its value is % of 360
       conditions.direction = (directionsPoint.percent/100)*360
-    } 
+    }
+    // Let's try swell size...
+    // NOTE Assumption alert
+    //      Unlike seconds beneath, all examples of the metres axis begin at 0.
+    //      Also, despite sometimes only showing up to 4 or 6, sometimes the axis reads
+    //      up to 8 metres. When 8 is shown, it's equal to 360. So, for now I'm going to
+    //      parse it like the direction value and work out a value as a percentage of 8.
+    // TODO don't rely on this. If it goes up to 10 metres, then it's probably going to 
+    //      add a row above 360's on the right. We need a way of determining values by
+    //      reading segment counts and possibly looking at layout.
+    //      Build up fixtures for testing, especially when the surf is huge and tiny
+    if (hsigPoint) {
+      // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
+      conditions.hsig = (hsigPoint.percent/100)*8
+    }
+    if (hmaxPoint) {
+      // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
+      conditions.hmax = (hmaxPoint.percent/100)*8
+    }
+    // OK, now for period in the graph below
+
+    
 
     cb(conditions)
   })
