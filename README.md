@@ -1,5 +1,7 @@
 # MHL Buoy Data
 
+[![build status](https://secure.travis-ci.org/DylanFM/mhl-buoy-data.png)](http://travis-ci.org/DylanFM/mhl-buoy-data)
+
 [MHL](http://mhl.nsw.gov.au/) buoys track swell conditions off the coast of NSW Australia. This will parse their GIF graphs so the data can be used in other ways.
 
 Learn more about these graphs here: http://new.mhl.nsw.gov.au/data/realtime/wave/
