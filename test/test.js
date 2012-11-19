@@ -12,7 +12,7 @@ describe('parseMHLGraph', function() {
 
       console.log(conditions)
 
-      assert.equal(conditions.direction, 135) // Degrees true north
+      assert.equal(conditions.direction, 136.8) // Degrees true north
       assert.equal(conditions.max_size, 1.8) // Metres
       assert.equal(conditions.sig_size, 1) // Metres
       assert.equal(conditions.max_period, 5) // Seconds

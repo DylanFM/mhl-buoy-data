@@ -1,6 +1,7 @@
 var parseGif = require('./gif')
 var _ = require('underscore')
 
+// From the MHL's glossary
 // Hmax RED
 // Maximum wave height in a recorded burst of raw data.
 // Hsig GREEN
@@ -149,6 +150,16 @@ var parseMHLGraph = function(path, cb) {
 
     console.log('topData: ', topData)
     console.log('bottomData: ', bottomData)
+
+    // We want to store the values of the different data points in the conditions object
+    // We need to know the top and bottom values from each y-axis
+    // The metre and second axises change according to the graph's content, but the direction doesn't
+    // Let's begin with the direction value
+    var directionsPoint = _.find(topData, function(p) { return p.colour === colours.blue })
+    if (directionsPoint) {
+      // So we know top is 360, bottom is 0. Percentage in point means its value is % of 360
+      conditions.direction = (directionsPoint.percent/100)*360
+    } 
 
     cb(conditions)
   })
