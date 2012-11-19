@@ -25,7 +25,7 @@ var getPixel = function(gif, x, y) {
 
 // Given a % value and details on the axis, what's the value?
 var getAxisValue = function(percent, max, min) {
-  return (parseFloat(((percent/100)*(max-min)).toFixed(2), 10)+min)
+  return parseFloat((((percent/100) * (max-min)) + min).toFixed(2), 10)
 }
 
 // Scan vertically checking for segments and noting them
@@ -42,6 +42,18 @@ var scanForData = function(gif, x, y, colours, cb) {
     cb({ coords: [x,y], colour: px })
 }
 
+// Given an axis' line, scan for segments (the lines off the axis denoting a value step)
+var getAxisSegments = function(gif, x, bottomY, topY, colour) {
+  var segments = [], 
+      y
+  for (y = bottomY; y > topY; y--) {
+    scanForSeg(gif, x, y, colour, function(coords) {
+      segments.push(coords)
+    })
+  }
+  return segments
+}
+
 // Parse requested graph...
 var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
@@ -55,6 +67,7 @@ var parseMHLGraph = function(path, cb) {
         secondAxis,
         strGct
         
+
     // NOTE assumption - checking colours manually, expecting no changes
     // Look in GCT for the indices of the colours we're after (r,g,b)
     strGct = gif.gct.map(function(rgb) { return rgb.join('') }) // Converting to strings for index of
@@ -63,13 +76,20 @@ var parseMHLGraph = function(path, cb) {
     colours.green = _.indexOf(strGct, [0,200,0].join(''))
     colours.black = _.indexOf(strGct, [0,0,0].join(''))
 
+
     // Build details on the axes
-    var directionAxis = {
+    // From 544,314 to 544,67
+    // NOTE unlike the LHS y-axes, this shouldn't change
+    directionAxis = {
       min: 0, 
       max: 360,
-      bottomY: 0,
-      topY: 0 
+      x: 544,
+      bottomY: 314,
+      topY: 67
     }
+    directionAxis.length = directionAxis.bottomY-directionAxis.topY
+    directionAxis.segments = getAxisSegments(gif, directionAxis.x+1, directionAxis.bottomY, directionAxis.topY, colours.blue)
+
     // NOTE Assumption alert
     //      Unlike seconds beneath, all examples of the metres axis begin at 0.
     //      Also, despite sometimes only showing up to 4 or 6, sometimes the axis reads
@@ -79,56 +99,36 @@ var parseMHLGraph = function(path, cb) {
     //      add a row above 360's on the right. We need a way of determining values by
     //      reading segment counts and possibly looking at layout.
     //      Build up fixtures for testing, especially when the surf is huge and tiny
-    var metreAxis = { 
+    // Top y-axis runs from 50,314 up to 50,129
+    // NOTE 129 may not be right. Sometimes the axis is shorter/longer
+    //      We should actually go to 50x and scan upwards from 315y to see when the solid black line
+    //      finishes, then we know where to scan to for the segments and how to form the %
+    metreAxis = { 
       min: 0, 
       max: 8, 
-      bottomY: 0,
-      topY: 0 
+      x: 50,
+      bottomY: 314,
+      topY: 129 
     }        
+    metreAxis.length = metreAxis.bottomY-directionAxis.topY // Swapped to direction scale, as we're using that at the moment
+    metreAxis.segments = getAxisSegments(gif, metreAxis.x-1, metreAxis.bottomY, metreAxis.topY, colours.black)
+
     // NOTE Assumption alert
     //      I'm just going to say that this is going from 4 seconds to 14 seconds
     //      This certainly isn't always the case, but for now it will work
     //      until I make things a bit more complex here
-    var secondAxis = {
-      min: 4, 
-      max: 14, 
-      bottomY: 0,
-      topY: 0 
-    }        
-
-    // We want to be able to have pixel coordinates and get an associated value
-
-
-    // Find the scale for the metres y-axis
-    // Top y-axis runs from 50,314 up to 50,129
-    // Scan along there, but just to the left and log any segments
-    // NOTE 129 may not be right. Sometimes the axis is shorter/longer
-    //      We should actually go to 50x and scan upwards from 315y to see when the solid black line
-    //      finishes, then we know where to scan to for the segments and how to form the %
-    for (var y=315;y>128;y--) {
-      scanForSeg(gif, 49, y, colours.black, function(coords) {
-        metreSegments.push(coords)
-      })
-    }
-    var metreLength = 315-66 // Swapped to direction scale, as we're using that at the moment
-    // Find the scale for the direction y-axis
-    // From 544,314 to 544,67
-    // NOTE unlike the LHS y-axes, this shouldn't change
-    for (var y=315;y>66;y--) {
-      scanForSeg(gif, 545, y, colours.blue, function(coords) {
-        directionSegments.push(coords)
-      })
-    }
-    var directionLength = 315-66
-    // Find the scale for the seconds y-axis
     // From 50,701 to 50,391
     // NOTE like the metre y-axis, this needs to be refactored to allow for different lengths
-    for (var y=702;y>390;y--) {
-      scanForSeg(gif, 49, y, colours.black, function(coords) {
-        secondSegments.push(coords)
-      })
-    }
-    var secondLength = 702-390
+    secondAxis = {
+      min: 4, 
+      max: 14, 
+      x: 50,
+      bottomY: 701,
+      topY: 391
+    }        
+    secondAxis.length = secondAxis.bottomY-secondAxis.topY
+    secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
+
 
     // Let's find the latest data
     // For each graph, we want to have the coordinates to the most recent point of the lines
@@ -162,15 +162,15 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Hsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
+          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
         break
         case colours.red:
           // Hmax, left y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
+          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
         break
         case colours.blue:
           // Direction, right y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
+          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
         break
       }
       return point
@@ -180,11 +180,11 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Tsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-390)/secondLength))*100
+          point.percent = (1.0-((point.coords[1]-390)/secondAxis.length))*100
         break
         case colours.red:
           // Tp1, left y-axis
-          point.percent = (1.0-((point.coords[1]-390)/secondLength))*100
+          point.percent = (1.0-((point.coords[1]-390)/secondAxis.length))*100
         break
       }
       return point

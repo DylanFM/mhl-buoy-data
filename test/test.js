@@ -5,11 +5,11 @@ var assert = require('assert')
 describe('parseMHLGraph', function() {
   it("parses the 1st sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
-      assert.equal(conditions.direction, 138.8) // Degrees true north
-      assert.equal(conditions.hmax, 1.77) // Metres
-      assert.equal(conditions.hsig, 1) // Metres
-      assert.equal(conditions.tp1, 5.12) // Seconds
-      assert.equal(conditions.tsig, 5.96) // Seconds
+      assert.equal(conditions.direction, 137) // Degrees true north
+      assert.equal(conditions.hmax, 1.72) // Metres
+      assert.equal(conditions.hsig, 0.94) // Metres
+      assert.equal(conditions.tp1, 5.06) // Seconds
+      assert.equal(conditions.tsig, 5.9) // Seconds
 
       done()
     })
@@ -17,9 +17,9 @@ describe('parseMHLGraph', function() {
 
   it("parses the 2nd sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-2.gif', function(conditions) {
-      assert.equal(conditions.direction, 183.61) // Degrees true north
-      assert.equal(conditions.hmax, 3.21) // Metres
-      assert.equal(conditions.hsig, 1.86) // Metres
+      assert.equal(conditions.direction, 182.19) // Degrees true north
+      assert.equal(conditions.hmax, 3.17) // Metres
+      assert.equal(conditions.hsig, 1.81) // Metres
       assert.equal(conditions.tp1, 5.85) // Seconds
       assert.equal(conditions.tsig, 5.8) // Seconds
 
