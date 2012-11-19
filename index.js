@@ -75,8 +75,8 @@ var seekUpToNoColour = function(gif, x, y, colour) {
   var px
   do {
     px = getPixel(gif, x, y--)
-  } while (px === colour)
-  return [x, y]
+  } while (px === colour && y)
+  return [x, y+1]
 }
 
 var pointPercent = function(y, offsetY, total) {
@@ -86,6 +86,26 @@ var pointPercent = function(y, offsetY, total) {
 // Find 1st matching point in supplied array of points
 var getPointFromData = function(data, colour) {
   return _.find(data, function(p) { return p.colour === colour })
+}
+
+// Seek upwards from point looking for a solid line of colour that's atleast 50px
+var seekUpForLineOfColour = function(gif, x, y, colour) {
+  var lengthOfColour = 0,
+      firstSawColour
+  do {
+    if (getPixel(gif, x, y) === colour) {
+      lengthOfColour++
+      if (!firstSawColour)
+        firstSawColour = [x, y]
+    } else {
+      if (lengthOfColour) {
+        lengthOfColour = 0
+        firstSawColour = null
+      }
+    }
+    y--
+  } while (lengthOfColour < 50 && y)
+  return firstSawColour
 }
 
 // Parse requested graph...
@@ -139,10 +159,9 @@ var parseMHLGraph = function(path, cb) {
       x: 50,
       bottomY: 314
     }        
-
     // Go to 50x and scan upwards from 315y to see when the solid black line
     // finishes and use that y position as the topY
-    metreAxis.topY  = seekUpToNoColour(gif, metreAxis.x, metreAxis.bottomY, colours.black)[1] + 1 // Subtract 1 as it returns the 1st non-black cell
+    metreAxis.topY  = seekUpToNoColour(gif, metreAxis.x, metreAxis.bottomY, colours.black)[1] + 1 // Add 1 as it returns the 1st non-black cell
     metreAxis.length = metreAxis.bottomY-directionAxis.topY // NOTE Swapped to direction scale, as we're using that at the moment
     metreAxis.segments = getAxisSegments(gif, metreAxis.x-1, metreAxis.bottomY, metreAxis.topY, colours.black)
 
@@ -155,12 +174,20 @@ var parseMHLGraph = function(path, cb) {
     secondAxis = {
       min: 4, 
       max: 14, 
-      x: 50,
-      bottomY: 701,
-      topY: 391
+      x: 50
     }        
+    // The second axis is tricky... it changes the height of the image, changes min and max and so on
+    // We need to calculate the bottom of the axis and top
+    // First of all, let's go to the bottom of the image and x inwards
+    secondAxis.bottomY = seekUpForLineOfColour(gif, secondAxis.x, gif.logical_screen_height, colours.black)[1]
+    // NOTE hard-coded assumption here. Reducing 8px of overhang beneath
+    secondAxis.bottomY -= 8
+    secondAxis.topY = seekUpToNoColour(gif, secondAxis.x, secondAxis.bottomY, colours.black)[1] + 1 // Add one to get last coloured cell
+    // Now we can calculate the correct length and fetch segments
     secondAxis.length = secondAxis.bottomY-secondAxis.topY
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
+
+    console.log(secondAxis)
 
     // Let's find the latest data
     topData    = getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green])
