@@ -21,9 +21,28 @@ var getPixel = function(gif, x, y) {
   var img = gif.images[0],
       i = (img.width * y) + x
   return img.data[i]
-
 }
 
+// Given a % value and details on the axis, what's the value?
+var getAxisValue = function(percent, max, min) {
+  return (parseFloat(((percent/100)*(max-min)).toFixed(2), 10)+min)
+}
+
+// Scan vertically checking for segments and noting them
+var scanForSeg = function(gif, x, y, colour, cb) {
+  var px = getPixel(gif, x, y)
+  if (px === colour)
+    cb([x,y])
+}
+
+// Callback executed if coordinate matches colours we're asking for
+var scanForData = function(gif, x, y, colours, cb) {
+  var px = getPixel(gif, x, y)
+  if (_.contains(colours, px))
+    cb({ coords: [x,y], colour: px })
+}
+
+// Parse requested graph...
 var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
     var conditions = {},
@@ -31,6 +50,9 @@ var parseMHLGraph = function(path, cb) {
         metreSegments = [],
         secondSegments = [],
         directionSegments = [],
+        directionAxis,
+        metreAxis,
+        secondAxis,
         strGct
         
     // NOTE assumption - checking colours manually, expecting no changes
@@ -41,19 +63,41 @@ var parseMHLGraph = function(path, cb) {
     colours.green = _.indexOf(strGct, [0,200,0].join(''))
     colours.black = _.indexOf(strGct, [0,0,0].join(''))
 
+    // Build details on the axes
+    var directionAxis = {
+      min: 0, 
+      max: 360,
+      bottomY: 0,
+      topY: 0 
+    }
+    // NOTE Assumption alert
+    //      Unlike seconds beneath, all examples of the metres axis begin at 0.
+    //      Also, despite sometimes only showing up to 4 or 6, sometimes the axis reads
+    //      up to 8 metres. When 8 is shown, it's equal to 360. So, for now I'm going to
+    //      parse it like the direction value and work out a value as a percentage of 8.
+    // TODO don't rely on this. If it goes up to 10 metres, then it's probably going to 
+    //      add a row above 360's on the right. We need a way of determining values by
+    //      reading segment counts and possibly looking at layout.
+    //      Build up fixtures for testing, especially when the surf is huge and tiny
+    var metreAxis = { 
+      min: 0, 
+      max: 8, 
+      bottomY: 0,
+      topY: 0 
+    }        
+    // NOTE Assumption alert
+    //      I'm just going to say that this is going from 4 seconds to 14 seconds
+    //      This certainly isn't always the case, but for now it will work
+    //      until I make things a bit more complex here
+    var secondAxis = {
+      min: 4, 
+      max: 14, 
+      bottomY: 0,
+      topY: 0 
+    }        
+
     // We want to be able to have pixel coordinates and get an associated value
 
-    var scanForSeg = function(x, y, colour, cb) {
-      var px = getPixel(gif, x, y)
-      if (px === colour)
-        cb([x,y])
-    }
-
-    var scanForData = function(x, y, colours, cb) {
-      var px = getPixel(gif, x, y)
-      if (_.contains(colours, px))
-        cb({ coords: [x,y], colour: px })
-    }
 
     // Find the scale for the metres y-axis
     // Top y-axis runs from 50,314 up to 50,129
@@ -62,7 +106,7 @@ var parseMHLGraph = function(path, cb) {
     //      We should actually go to 50x and scan upwards from 315y to see when the solid black line
     //      finishes, then we know where to scan to for the segments and how to form the %
     for (var y=315;y>128;y--) {
-      scanForSeg(49, y, colours.black, function(coords) {
+      scanForSeg(gif, 49, y, colours.black, function(coords) {
         metreSegments.push(coords)
       })
     }
@@ -71,7 +115,7 @@ var parseMHLGraph = function(path, cb) {
     // From 544,314 to 544,67
     // NOTE unlike the LHS y-axes, this shouldn't change
     for (var y=315;y>66;y--) {
-      scanForSeg(545, y, colours.blue, function(coords) {
+      scanForSeg(gif, 545, y, colours.blue, function(coords) {
         directionSegments.push(coords)
       })
     }
@@ -80,7 +124,7 @@ var parseMHLGraph = function(path, cb) {
     // From 50,701 to 50,391
     // NOTE like the metre y-axis, this needs to be refactored to allow for different lengths
     for (var y=702;y>390;y--) {
-      scanForSeg(49, y, colours.black, function(coords) {
+      scanForSeg(gif, 49, y, colours.black, function(coords) {
         secondSegments.push(coords)
       })
     }
@@ -94,7 +138,7 @@ var parseMHLGraph = function(path, cb) {
     var x = 543
     while(!topData.length) {
       for(var y=313;y>66;y--) {
-        scanForData(x, y, [colours.blue, colours.red, colours.green], function(point) {
+        scanForData(gif, x, y, [colours.blue, colours.red, colours.green], function(point) {
           topData.push(point)
         })
       }
@@ -105,7 +149,7 @@ var parseMHLGraph = function(path, cb) {
     var x = 543
     while(!bottomData.length) {
       for(var y=700;y>390;y--) {
-        scanForData(x, y, [colours.red, colours.green], function(point) {
+        scanForData(gif, x, y, [colours.red, colours.green], function(point) {
           bottomData.push(point)
         })
       }
@@ -157,29 +201,6 @@ var parseMHLGraph = function(path, cb) {
         hmaxPoint        =  getPointFromData(topData, colours.red),
         tsigPoint        =  getPointFromData(bottomData, colours.green),
         tp1Point         =  getPointFromData(bottomData, colours.red)
-
-    // Build details on the axes
-    var directionAxis = { min: 0, max: 360 }  // safe assumption
-    // NOTE Assumption alert
-    //      Unlike seconds beneath, all examples of the metres axis begin at 0.
-    //      Also, despite sometimes only showing up to 4 or 6, sometimes the axis reads
-    //      up to 8 metres. When 8 is shown, it's equal to 360. So, for now I'm going to
-    //      parse it like the direction value and work out a value as a percentage of 8.
-    // TODO don't rely on this. If it goes up to 10 metres, then it's probably going to 
-    //      add a row above 360's on the right. We need a way of determining values by
-    //      reading segment counts and possibly looking at layout.
-    //      Build up fixtures for testing, especially when the surf is huge and tiny
-    var metreAxis = { min: 0, max: 8 }        // hard-coding an assumption. We should be calculating this.
-    // NOTE Assumption alert
-    //      I'm just going to say that this is going from 4 seconds to 14 seconds
-    //      This certainly isn't always the case, but for now it will work
-    //      until I make things a bit more complex here
-    var secondAxis = { min: 4, max: 14 }      // hard-coding an assumption. We should be calculating this.
-
-    // Given a % value and details on the axis, what's the value?
-    var getAxisValue = function(percent, max, min) {
-      return (parseFloat(((percent/100)*(max-min)).toFixed(2), 10)+min)
-    }
 
     // We want to store the values of the different data points in the conditions object
     if (directionsPoint)
