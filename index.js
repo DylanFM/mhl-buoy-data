@@ -179,35 +179,9 @@ var parseMHLGraph = function(path, cb) {
     // Now we can calculate the correct length and fetch segments
     secondAxis.length = secondAxis.bottomY-secondAxis.topY
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
-
     // NOTE Assumption alert
     //      We're leaving the min period as 4. I haven't seen that change yet. Appears they only add rows when the period grows
-    // Some of this will be hard-coded, based on examples I've seen
-    // Handle max of 10, 12 and 14 for now (the only examples we have). Will add a couple of others following the pattern
-    switch (secondAxis.segments.length) {
-      case 14:
-        secondAxis.max = 18
-        break
-      case 12:
-        secondAxis.max = 16
-        break
-      case 10:
-        secondAxis.max = 14
-        break
-      case 8:
-        secondAxis.max = 12
-        break
-      case 6:
-        secondAxis.max = 10
-        break
-      case 4:
-        secondAxis.max = 8
-        break
-      default:
-        throw new Error("Don't recognise seconds axis. " + secondAxis.segments.length + " segments present.")
-    }
-
-    console.log(secondAxis)
+    secondAxis.max = secondAxis.segments.length + secondAxis.min
 
     // Let's find the latest data
     topData    = getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green])
