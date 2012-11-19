@@ -68,8 +68,7 @@ var parseMHLGraph = function(path, cb) {
         metreSegments.push(coords)
       })
     }
-    var metreLength = 315-128
-    console.log('m segs: ', metreSegments)
+    var metreLength = 315-66 // Swapped to direction scale, as we're using that at the moment
     // Find the scale for the direction y-axis
     // From 544,314 to 544,67
     // NOTE unlike the LHS y-axes, this shouldn't change
@@ -79,7 +78,6 @@ var parseMHLGraph = function(path, cb) {
       })
     }
     var directionLength = 315-66
-    console.log('dir segs: ', directionSegments)
     // Find the scale for the seconds y-axis
     // From 50,701 to 50,391
     // NOTE like the metre y-axis, this needs to be refactored to allow for different lengths
@@ -89,7 +87,6 @@ var parseMHLGraph = function(path, cb) {
       })
     }
     var secondLength = 702-390
-    console.log('s segs: ', secondSegments)
 
     // Let's find the latest data
     // For each graph, we want to have the coordinates to the most recent point of the lines
@@ -105,7 +102,6 @@ var parseMHLGraph = function(path, cb) {
       }
       x--
     }
-    console.log('top data: ', topData)
     // And now the bottom graph
     var bottomData = []
     var x = 543
@@ -117,7 +113,6 @@ var parseMHLGraph = function(path, cb) {
       }
       x--
     }
-    console.log('bottom data: ', bottomData)
 
     // Let's give the data points a % value relating to their y-axis scale
     // Top graph
@@ -125,15 +120,15 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Hsig, left y-axis
-          point.percent = Math.floor(((314-point.coords[1])/metreLength)*100)
+          point.percent = ((314-point.coords[1])/directionLength)*100
         break
         case colours.red:
           // Hmax, left y-axis
-          point.percent = Math.floor(((314-point.coords[1])/metreLength)*100)
+          point.percent = ((314-point.coords[1])/directionLength)*100
         break
         case colours.blue:
           // Direction, right y-axis
-          point.percent = Math.floor(((314-point.coords[1])/directionLength)*100)
+          point.percent = ((314-point.coords[1])/directionLength)*100
         break
       }
       return point
@@ -143,18 +138,15 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Tsig, left y-axis
-          point.percent = Math.floor(((701-point.coords[1])/secondLength)*100)
+          point.percent = ((701-point.coords[1])/secondLength)*100
         break
         case colours.red:
           // Tp1, left y-axis
-          point.percent = Math.floor(((701-point.coords[1])/secondLength)*100)
+          point.percent = ((701-point.coords[1])/secondLength)*100
         break
       }
       return point
     })
-
-    console.log('topData: ', topData)
-    console.log('bottomData: ', bottomData)
 
     var directionsPoint  =  _.find(topData, function(p) { return p.colour === colours.blue }),
         hsigPoint        =  _.find(topData, function(p) { return p.colour === colours.green }),
@@ -168,7 +160,7 @@ var parseMHLGraph = function(path, cb) {
     // Let's begin with the direction value
     if (directionsPoint) {
       // So we know top is 360, bottom is 0. Percentage in point means its value is % of 360
-      conditions.direction = (directionsPoint.percent/100)*360
+      conditions.direction = parseFloat(((directionsPoint.percent/100)*360).toFixed(2), 10)
     }
     // Let's try swell size...
     // NOTE Assumption alert
@@ -182,11 +174,11 @@ var parseMHLGraph = function(path, cb) {
     //      Build up fixtures for testing, especially when the surf is huge and tiny
     if (hsigPoint) {
       // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
-      conditions.hsig = (hsigPoint.percent/100)*8
+      conditions.hsig = parseFloat(((hsigPoint.percent/100)*8).toFixed(2), 10)
     }
     if (hmaxPoint) {
       // Dir top is 360, bottom is 0. Treating this like that but from 8 to 0.
-      conditions.hmax = (hmaxPoint.percent/100)*8
+      conditions.hmax = parseFloat(((hmaxPoint.percent/100)*8).toFixed(2), 10)
     }
     // OK, now for period in the graph below
 

@@ -8,11 +8,11 @@ describe('parseMHLGraph', function() {
 
       console.log(conditions)
 
-      assert.equal(conditions.direction, 136.8) // Degrees true north
-      assert.equal(conditions.hmax, 1.8) // Metres
-      assert.equal(conditions.hsig, 1) // Metres
-      assert.equal(conditions.tp1, 5) // Seconds
-      assert.equal(conditions.tsig, 6) // Seconds
+      assert.equal(conditions.direction, 137.35) // Degrees true north
+      assert.equal(conditions.hmax, 1.85) // Metres
+      assert.equal(conditions.hsig, .98) // Metres
+      assert.equal(conditions.tp1, 5.1) // Seconds
+      assert.equal(conditions.tsig, 5.95) // Seconds
 
       done()
     })
