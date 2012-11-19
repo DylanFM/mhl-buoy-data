@@ -41,8 +41,6 @@ var parseMHLGraph = function(path, cb) {
     colours.green = _.indexOf(strGct, [0,200,0].join(''))
     colours.black = _.indexOf(strGct, [0,0,0].join(''))
 
-    console.log(colours)
-
     // We want to be able to have pixel coordinates and get an associated value
 
     var scanForSeg = function(x, y, colour, cb) {
@@ -120,15 +118,15 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Hsig, left y-axis
-          point.percent = ((314-point.coords[1])/directionLength)*100
+          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
         break
         case colours.red:
           // Hmax, left y-axis
-          point.percent = ((314-point.coords[1])/directionLength)*100
+          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
         break
         case colours.blue:
           // Direction, right y-axis
-          point.percent = ((314-point.coords[1])/directionLength)*100
+          point.percent = (1.0-((point.coords[1]-66)/directionLength))*100
         break
       }
       return point
@@ -138,11 +136,11 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Tsig, left y-axis
-          point.percent = ((701-point.coords[1])/secondLength)*100
+          point.percent = (1.0-((point.coords[1]-390)/secondLength))*100
         break
         case colours.red:
           // Tp1, left y-axis
-          point.percent = ((701-point.coords[1])/secondLength)*100
+          point.percent = (1.0-((point.coords[1]-390)/secondLength))*100
         break
       }
       return point
