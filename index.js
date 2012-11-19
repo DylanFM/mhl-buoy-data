@@ -146,29 +146,20 @@ var parseMHLGraph = function(path, cb) {
       return point
     })
 
-    var directionsPoint  =  _.find(topData, function(p) { return p.colour === colours.blue }),
-        hsigPoint        =  _.find(topData, function(p) { return p.colour === colours.green }),
-        hmaxPoint        =  _.find(topData, function(p) { return p.colour === colours.red }),
-        tsigPoint        =  _.find(bottomData, function(p) { return p.colour === colours.green }),
-        tp1Point         =  _.find(bottomData, function(p) { return p.colour === colours.red })
-
-    var directionAxis = { min: 0, max: 360 }  // safe assumption
-    var metreAxis = { min: 0, max: 8 }        // hard-coding an assumption. We should be calculating this.
-    var secondAxis = { min: 4, max: 14 }      // hard-coding an assumption. We should be calculating this.
-
-    var getAxisValue = function(percent, max, min) {
-      return (parseFloat(((percent/100)*(max-min)).toFixed(2), 10)+min)
+    // Find 1st matching point in supplied array of points
+    var getPointFromData = function(data, colour) {
+      return _.find(data, function(p) { return p.colour === colour })
     }
 
-    // We want to store the values of the different data points in the conditions object
-    // We need to know the top and bottom values from each y-axis
-    // The metre and second axises change according to the graph's content, but the direction doesn't
-    // Let's begin with the direction value
+    // Fetch the point for each line we're seeking
+    var directionsPoint  =  getPointFromData(topData, colours.blue),
+        hsigPoint        =  getPointFromData(topData, colours.green),
+        hmaxPoint        =  getPointFromData(topData, colours.red),
+        tsigPoint        =  getPointFromData(bottomData, colours.green),
+        tp1Point         =  getPointFromData(bottomData, colours.red)
 
-    if (directionsPoint)
-      conditions.direction = getAxisValue(directionsPoint.percent, directionAxis.max, directionAxis.min)
-
-    // Let's try swell size...
+    // Build details on the axes
+    var directionAxis = { min: 0, max: 360 }  // safe assumption
     // NOTE Assumption alert
     //      Unlike seconds beneath, all examples of the metres axis begin at 0.
     //      Also, despite sometimes only showing up to 4 or 6, sometimes the axis reads
@@ -178,6 +169,21 @@ var parseMHLGraph = function(path, cb) {
     //      add a row above 360's on the right. We need a way of determining values by
     //      reading segment counts and possibly looking at layout.
     //      Build up fixtures for testing, especially when the surf is huge and tiny
+    var metreAxis = { min: 0, max: 8 }        // hard-coding an assumption. We should be calculating this.
+    // NOTE Assumption alert
+    //      I'm just going to say that this is going from 4 seconds to 14 seconds
+    //      This certainly isn't always the case, but for now it will work
+    //      until I make things a bit more complex here
+    var secondAxis = { min: 4, max: 14 }      // hard-coding an assumption. We should be calculating this.
+
+    // Given a % value and details on the axis, what's the value?
+    var getAxisValue = function(percent, max, min) {
+      return (parseFloat(((percent/100)*(max-min)).toFixed(2), 10)+min)
+    }
+
+    // We want to store the values of the different data points in the conditions object
+    if (directionsPoint)
+      conditions.direction = getAxisValue(directionsPoint.percent, directionAxis.max, directionAxis.min)
 
     if (hsigPoint)
       conditions.hsig = getAxisValue(hsigPoint.percent, metreAxis.max, metreAxis.min)
@@ -185,18 +191,13 @@ var parseMHLGraph = function(path, cb) {
     if (hmaxPoint)
       conditions.hmax = getAxisValue(hmaxPoint.percent, metreAxis.max, metreAxis.min)
 
-    // OK, now for period in the graph below
-    // NOTE Assumption alert
-    //      I'm just going to say that this is going from 4 seconds to 14 seconds
-    //      This certainly isn't always the case, but for now it will work
-    //      until I make things a bit more complex here
-
     if (tsigPoint)
       conditions.tsig = getAxisValue(tsigPoint.percent, secondAxis.max, secondAxis.min)
 
     if (tp1Point)
       conditions.tp1 = getAxisValue(tp1Point.percent, secondAxis.max, secondAxis.min)
 
+    // All done! Pass conditions to callback
     cb(conditions)
   })
 }
