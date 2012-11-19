@@ -70,12 +70,22 @@ var getLatestData = function(gif, fromX, bottomY, topY, colours) {
   return data
 }
 
+// Used for scanning axes
 var seekUpToNoColour = function(gif, x, y, colour) {
   var px
   do {
     px = getPixel(gif, x, y--)
   } while (px === colour)
   return [x, y]
+}
+
+var pointPercent = function(y, offsetY, total) {
+  return (1.0-((y - offsetY)/total))*100
+}
+
+// Find 1st matching point in supplied array of points
+var getPointFromData = function(data, colour) {
+  return _.find(data, function(p) { return p.colour === colour })
 }
 
 // Parse requested graph...
@@ -152,50 +162,27 @@ var parseMHLGraph = function(path, cb) {
     secondAxis.length = secondAxis.bottomY-secondAxis.topY
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
 
-    //
     // Let's find the latest data
     topData    = getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green])
     bottomData = getLatestData(gif, directionAxis.x-1, secondAxis.bottomY, secondAxis.topY, [colours.red, colours.green])
 
-
     // Let's give the data points a % value relating to their y-axis scale
     // Top graph
     topData = topData.map(function(point) {
-      switch (point.colour) {
-        case colours.green:
-          // Hsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
-        break
-        case colours.red:
-          // Hmax, left y-axis
-          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
-        break
-        case colours.blue:
-          // Direction, right y-axis
-          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
-        break
+      // Switch on colours. If red or green it's left axis, otherwise right
+      // NOTE yes, these are the same, but I expect soon we're going to need to treat size as separate
+      if (_.contains([colours.green, colours.red], point.colour)) {
+        point.percent = pointPercent(point.coords[1], directionAxis.topY, directionAxis.length)
+      } else {
+        point.percent = pointPercent(point.coords[1], directionAxis.topY, directionAxis.length)
       }
       return point
     })
     // Now bottom graph
     bottomData = bottomData.map(function(point) {
-      switch (point.colour) {
-        case colours.green:
-          // Tsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-secondAxis.topY)/secondAxis.length))*100
-        break
-        case colours.red:
-          // Tp1, left y-axis
-          point.percent = (1.0-((point.coords[1]-secondAxis.topY)/secondAxis.length))*100
-        break
-      }
+      point.percent = pointPercent(point.coords[1], secondAxis.topY, secondAxis.length)
       return point
     })
-
-    // Find 1st matching point in supplied array of points
-    var getPointFromData = function(data, colour) {
-      return _.find(data, function(p) { return p.colour === colour })
-    }
 
     // Fetch the point for each line we're seeking
     var directionsPoint  =  getPointFromData(topData, colours.blue),
