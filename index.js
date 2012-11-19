@@ -155,15 +155,15 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Hsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
+          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
         break
         case colours.red:
           // Hmax, left y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
+          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
         break
         case colours.blue:
           // Direction, right y-axis
-          point.percent = (1.0-((point.coords[1]-66)/directionAxis.length))*100
+          point.percent = (1.0-((point.coords[1]-directionAxis.topY)/directionAxis.length))*100
         break
       }
       return point
@@ -173,11 +173,11 @@ var parseMHLGraph = function(path, cb) {
       switch (point.colour) {
         case colours.green:
           // Tsig, left y-axis
-          point.percent = (1.0-((point.coords[1]-390)/secondAxis.length))*100
+          point.percent = (1.0-((point.coords[1]-secondAxis.topY)/secondAxis.length))*100
         break
         case colours.red:
           // Tp1, left y-axis
-          point.percent = (1.0-((point.coords[1]-390)/secondAxis.length))*100
+          point.percent = (1.0-((point.coords[1]-secondAxis.topY)/secondAxis.length))*100
         break
       }
       return point
