@@ -179,8 +179,17 @@ var parseMHLGraph = function(path, cb) {
       conditions.hmax = parseFloat(((hmaxPoint.percent/100)*8).toFixed(2), 10)
     }
     // OK, now for period in the graph below
-
-    
+    // NOTE Assumption alert
+    //      I'm just going to say that this is going from 4 seconds to 14 seconds
+    //      This certainly isn't always the case, but for now it will work
+    //      until I make things a bit more complex here
+    if (tsigPoint) {
+      // 10 isn't 14, but the scale begins at 4, so I'll add 4
+      conditions.tsig = parseFloat(((tsigPoint.percent/100)*10).toFixed(2),10) + 4
+    }
+    if (tp1Point) {
+      conditions.tp1 = parseFloat(((tp1Point.percent/100)*10).toFixed(2),10) + 4
+    }
 
     cb(conditions)
   })
