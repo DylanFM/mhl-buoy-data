@@ -54,6 +54,22 @@ var getAxisSegments = function(gif, x, bottomY, topY, colour) {
   return segments
 }
 
+// For each graph, we want to have the coordinates to the most recent point of the lines
+// Scan backwards from the right-hand axis to find the 1st instances of lines
+var getLatestData = function(gif, fromX, bottomY, topY, colours) {
+  var data = [],
+      y
+  while(!data.length) {
+    for(y = bottomY; y > topY; y--) {
+      scanForData(gif, fromX, y, colours, function(point) {
+        data.push(point)
+      })
+    }
+    fromX--
+  }
+  return data
+}
+
 // Parse requested graph...
 var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
@@ -62,10 +78,8 @@ var parseMHLGraph = function(path, cb) {
         metreSegments = [],
         secondSegments = [],
         directionSegments = [],
-        directionAxis,
-        metreAxis,
-        secondAxis,
-        strGct
+        directionAxis, metreAxis, secondAxis,
+        strGct, topData, bottomData
         
 
     // NOTE assumption - checking colours manually, expecting no changes
@@ -129,32 +143,11 @@ var parseMHLGraph = function(path, cb) {
     secondAxis.length = secondAxis.bottomY-secondAxis.topY
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
 
-
+    //
     // Let's find the latest data
-    // For each graph, we want to have the coordinates to the most recent point of the lines
-    // 1st of all, the top graph
-    // Scan backwards from the right-hand axis to find the 1st instances of lines
-    var topData = []
-    var x = 543
-    while(!topData.length) {
-      for(var y=313;y>66;y--) {
-        scanForData(gif, x, y, [colours.blue, colours.red, colours.green], function(point) {
-          topData.push(point)
-        })
-      }
-      x--
-    }
-    // And now the bottom graph
-    var bottomData = []
-    var x = 543
-    while(!bottomData.length) {
-      for(var y=700;y>390;y--) {
-        scanForData(gif, x, y, [colours.red, colours.green], function(point) {
-          bottomData.push(point)
-        })
-      }
-      x--
-    }
+    topData    = getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green])
+    bottomData = getLatestData(gif, directionAxis.x-1, secondAxis.bottomY, secondAxis.topY, [colours.red, colours.green])
+
 
     // Let's give the data points a % value relating to their y-axis scale
     // Top graph
