@@ -1,6 +1,6 @@
 {
   "name": "mhl-buoy-data",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "MHL buoys track swell conditions off the coast of NSW Australia. This will parse their GIF graphs so the data can be used in other ways",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "Australia"
   ],
   "author": "Dylan Fogarty-MacDonald",
-  "license": "BSD",
+  "license": "MIT",
   "dependencies": {
     "underscore": "~1.4.2"
   },
