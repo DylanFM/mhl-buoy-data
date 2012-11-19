@@ -17,11 +17,71 @@ describe('parseMHLGraph', function() {
 
   it("parses the 2nd sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-2.gif', function(conditions) {
-      assert.equal(conditions.direction, 183.64) // Degrees true north
-      assert.equal(conditions.hmax, 3.21) // Metres
-      assert.equal(conditions.hsig, 1.85) // Metres
-      assert.equal(conditions.tp1, 5.77) // Seconds
-      assert.equal(conditions.tsig, 5.65) // Seconds
+      assert.equal(conditions.direction, 183.64)
+      assert.equal(conditions.hmax, 3.21)
+      assert.equal(conditions.hsig, 1.85)
+      assert.equal(conditions.tp1, 5.77)
+      assert.equal(conditions.tsig, 5.65)
+
+      done()
+    })
+  })
+
+  it("parses the kembla data graph", function(done) {
+    parseMHLGraph('./test/fixtures/kembla-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 167.61)
+      assert.equal(conditions.hmax, 2.69)
+      assert.equal(conditions.hsig, 1.52)
+      assert.equal(conditions.tp1, 8.16)
+      assert.equal(conditions.tsig, 7.32)
+
+      done()
+    })
+  })
+
+  it("parses the bateman data graph", function(done) {
+    parseMHLGraph('./test/fixtures/batman-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 182.19)
+      assert.equal(conditions.hmax, 4.31)
+      assert.equal(conditions.hsig, 2.2)
+      assert.equal(conditions.tp1, 7.84)
+      assert.equal(conditions.tsig, 7.1)
+
+      done()
+    })
+  })
+
+  it("parses the byron data graph", function(done) {
+    parseMHLGraph('./test/fixtures/byron-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 102.02)
+      assert.equal(conditions.hmax, 1.81)
+      assert.equal(conditions.hsig, 1.07)
+      assert.equal(conditions.tp1, 6.58)
+      assert.equal(conditions.tsig, 7.16)
+
+      done()
+    })
+  })
+
+  it("parses the coffs data graph", function(done) {
+    parseMHLGraph('./test/fixtures/coffs-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 160.32)
+      assert.equal(conditions.hmax, 3.53)
+      assert.equal(conditions.hsig, 1.88)
+      assert.equal(conditions.tp1, 8.48)
+      assert.equal(conditions.tsig, 6.77)
+
+      done()
+    })
+  })
+
+  it("parses the eden data graph", function(done) {
+    parseMHLGraph('./test/fixtures/eden-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 132.63)
+      assert.equal(conditions.hmax, 5.18)
+      assert.equal(conditions.hsig, 2.88)
+      assert.equal(conditions.tp1, 8.52)
+      assert.equal(conditions.tsig, 7.97)
 
       done()
     })
