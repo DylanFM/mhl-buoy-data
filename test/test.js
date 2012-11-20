@@ -3,6 +3,18 @@ var parseMHLGraph = require('../')
 var assert = require('assert')
 
 describe('parseMHLGraph', function() {
+  it("parses the 1st sydney data graph by URL", function(done) {
+    parseMHLGraph('https://dl.dropbox.com/u/1614309/MHL%20repo/syddir-1.gif', function(conditions) {
+      assert.equal(conditions.direction, 138.46) // Degrees true north
+      assert.equal(conditions.hmax, 1.75) // Metres
+      assert.equal(conditions.hsig, 0.97) // Metres
+      assert.equal(conditions.tp1, 5.1) // Seconds
+      assert.equal(conditions.tsig, 5.94) // Seconds
+
+      done()
+    })
+  })
+
   it("parses the 1st sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
       assert.equal(conditions.direction, 138.46) // Degrees true north
