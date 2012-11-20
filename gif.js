@@ -1,12 +1,33 @@
 var fs = require('fs')
+var http = require('http')
 
 var getImageData = function(path, cb) {
-  fs.readFile(path, function(err, data) {
-    if (err) {
-      return console.log(err)
-    }
-    return cb(data)
-  })
+  // Check if we're requesting a local file or a URL
+  // Crude... but functional
+  if (/^http:\/\//.test(path)) {
+    // Fetch the image...
+    http.get(path, function(res) {
+      // Track buffers
+      var buffers = []
+      res.on('data', function(chunk) {
+        // Continue with the buffers...
+        buffers.push(chunk)
+      })
+      res.on('end', function() {
+        // Response has finished, let's move on
+        cb(Buffer.concat(buffers))
+      })
+    }).on('error', function(e) {
+      console.log("Got error: " + e.message)
+    })
+  } else {
+    fs.readFile(path, function(err, data) {
+      if (err) {
+        return console.log(err)
+      }
+      return cb(data)
+    })
+  }
 }
 
 var getPacked = function(bits) {
