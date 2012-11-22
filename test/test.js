@@ -124,6 +124,16 @@ describe('parseMHLGraph', function() {
 })
 
 describe('parseGif', function() {
+  it("doesn't like bad files", function(done) {
+    parseGif('./test/test.js', function(err, gif) {
+
+      assert(err)
+      assert(!gif)
+
+      done()
+    })
+  })
+
   it("should return pretty gif data", function(done) {
     parseGif('./test/fixtures/pretty.gif', function(err, gif) {
 

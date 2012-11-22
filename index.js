@@ -167,7 +167,14 @@ var seekAcrossForLineOfColour = function(gif, x, y, colour) {
 
 // Parse requested graph...
 var parseMHLGraph = function(path, cb) {
-  parseGif(path, function(gif) {
+  parseGif(path, function(err, gif) {
+
+    // If we got an error from the parseGif call, exit now
+    if (err) {
+      cb(err)
+      return
+    }
+    
     var conditions = {},
         colours = {},
         metreSegments = [],
