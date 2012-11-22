@@ -25,7 +25,7 @@ var getPixel = function(gif, x, y) {
 
 // Given a % value and details on the axis, what's the value?
 var getAxisValue = function(percent, max, min) {
-  return parseFloat((((percent/100) * (max-min)) + min).toFixed(2), 10)
+  return parseFloat((((percent/100) * (max-min)) + min).toFixed(1), 10)
 }
 
 // Scan vertically checking for segments and noting them
@@ -46,7 +46,7 @@ var scanForData = function(gif, x, y, colours, cb) {
 var getAxisSegments = function(gif, x, bottomY, topY, colour) {
   var segments = [], 
       y
-  for (y = bottomY; y > topY; y--) {
+  for (y = bottomY; y >= topY; y--) {
     scanForSeg(gif, x, y, colour, function(coords) {
       segments.push(coords)
     })
@@ -112,7 +112,11 @@ var getXAxisFromAbove = function(gif, x, y, colour) {
 }
 
 var pointPercent = function(y, offsetY, total) {
-  return (1.0-((y - offsetY)/total))*100
+  return ((total-(y-offsetY))/total)*100
+}
+
+var uniqueByColour = function(data) {
+  return _.uniq(data, false, function(pt) { return pt.colour })
 }
 
 // Find 1st matching point in supplied array of points
@@ -198,7 +202,7 @@ var parseMHLGraph = function(path, cb) {
     directionAxis.x = getAxisFromRight(gif, gif.logical_screen_width - 30, 250, colours.blue)[0]
     // Also need to locate the X axis, which is shared with metre
     // Go in to what could be the center of the top graph and scan down for the line
-    directionAxis.bottomY = getXAxisFromAbove(gif, directionAxis.x - 80, 250, colours.black)[1] - 1
+    directionAxis.bottomY = getXAxisFromAbove(gif, directionAxis.x - 80, 250, colours.black)[1]
     // Best get the topY too as it could change
     // Notice I'm -- the bottomY. Because the x axis has a black pixel there
     directionAxis.topY = seekUpToNoColour(gif, directionAxis.x, directionAxis.bottomY - 1, colours.blue)[1] + 1 // Add 1 as it returns the 1st non-blue cell
@@ -216,8 +220,7 @@ var parseMHLGraph = function(path, cb) {
     //      Build up fixtures for testing, especially when the surf is huge and tiny
 
     metreAxis = { 
-      min: 0, 
-      max: 8
+      min: 0
     }        
     // TODO max should be calculated like seconds' max below
     // Find metre y axis by going 250 down and scanning right for a vertical line
@@ -227,8 +230,9 @@ var parseMHLGraph = function(path, cb) {
     // Go to x of y axis and scan upwards from 315y to see when the solid black line
     // finishes and use that y position as the topY
     metreAxis.topY  = seekUpToNoColour(gif, metreAxis.x, metreAxis.bottomY, colours.black)[1] + 1 // Add 1 as it returns the 1st non-black cell
-    metreAxis.length = metreAxis.bottomY-directionAxis.topY // NOTE Swapped to direction scale, as we're using that at the moment
+    metreAxis.length = metreAxis.bottomY-metreAxis.topY
     metreAxis.segments = getAxisSegments(gif, metreAxis.x-1, metreAxis.bottomY, metreAxis.topY, colours.black)
+    metreAxis.max = metreAxis.segments.length + metreAxis.min - 1
 
     // Work out seconds axis
     secondAxis = {
@@ -248,19 +252,18 @@ var parseMHLGraph = function(path, cb) {
     secondAxis.segments = getAxisSegments(gif, secondAxis.x-1, secondAxis.bottomY, secondAxis.topY, colours.black)
     // NOTE Assumption alert
     //      We're leaving the min period as 4. I haven't seen that change yet. Appears they only add rows when the period grows
-    secondAxis.max = secondAxis.segments.length + secondAxis.min
+    secondAxis.max = secondAxis.segments.length + secondAxis.min - 1
 
     // Let's find the latest data
-    topData    = getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green])
-    bottomData = getLatestData(gif, directionAxis.x-1, secondAxis.bottomY, secondAxis.topY, [colours.red, colours.green])
+    topData    = uniqueByColour(getLatestData(gif, directionAxis.x-1, directionAxis.bottomY, directionAxis.topY, [colours.blue, colours.red, colours.green]))
+    bottomData = uniqueByColour(getLatestData(gif, directionAxis.x-1, secondAxis.bottomY, secondAxis.topY, [colours.red, colours.green]))
 
     // Let's give the data points a % value relating to their y-axis scale
     // Top graph
     topData = topData.map(function(point) {
       // Switch on colours. If red or green it's left axis, otherwise right
-      // NOTE yes, these are the same, but I expect soon we're going to need to treat size as separate
       if (_.contains([colours.green, colours.red], point.colour)) {
-        point.percent = pointPercent(point.coords[1], directionAxis.topY, directionAxis.length)
+        point.percent = pointPercent(point.coords[1], metreAxis.topY, metreAxis.length)
       } else {
         point.percent = pointPercent(point.coords[1], directionAxis.topY, directionAxis.length)
       }
