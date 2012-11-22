@@ -79,6 +79,38 @@ var seekUpToNoColour = function(gif, x, y, colour) {
   return [x, y+1]
 }
 
+// Go to x and y and scan up for line of colour
+// If no line, go left 1 until a line is found
+// Return the x,y of where the line was located
+var getAxisFromRight = function(gif, x, y, colour) {
+  var axis
+  do {
+    // Seek up from point, reduce x by 1 for next iteration if it occurs
+    axis = seekUpForLineOfColour(gif, x--, y, colour)
+  } while(!axis && x)
+  return axis
+}
+
+// Like above function, but in reverse
+var getAxisFromLeft = function(gif, x, y, colour) {
+  var axis
+  do {
+    // Seek up from point, increment x for next iteration if it occurs
+    axis = seekUpForLineOfColour(gif, x++, y, colour)
+  } while(!axis && x < gif.logical_screen_width)
+  return axis
+}
+
+// Scan downwards from point for a line to the right
+var getXAxisFromAbove = function(gif, x, y, colour) {
+  var axis
+  do {
+    // Seek across from point for a line
+    axis = seekAcrossForLineOfColour(gif, x, y++, colour)
+  } while(!axis && y < gif.logical_screen_height)
+  return axis
+}
+
 var pointPercent = function(y, offsetY, total) {
   return (1.0-((y - offsetY)/total))*100
 }
@@ -108,6 +140,27 @@ var seekUpForLineOfColour = function(gif, x, y, colour) {
   return firstSawColour
 }
 
+// TODO this function and the one above could be DRYd
+// Seek across from point looking for a solid line of colour that's atleast 50px
+var seekAcrossForLineOfColour = function(gif, x, y, colour) {
+  var lengthOfColour = 0,
+      firstSawColour
+  do {
+    if (getPixel(gif, x, y) === colour) {
+      lengthOfColour++
+      if (!firstSawColour)
+        firstSawColour = [x, y]
+    } else {
+      if (lengthOfColour) {
+        lengthOfColour = 0
+        firstSawColour = null
+      }
+    }
+    x++
+  } while (lengthOfColour < 50 && x < gif.logical_screen_width)
+  return firstSawColour
+}
+
 // Parse requested graph...
 var parseMHLGraph = function(path, cb) {
   parseGif(path, function(gif) {
@@ -128,17 +181,27 @@ var parseMHLGraph = function(path, cb) {
     colours.green = _.indexOf(strGct, [0,200,0].join(''))
     colours.black = _.indexOf(strGct, [0,0,0].join(''))
 
+    // Image size and axis locations:
+    //  I appears that when the image gets to a certain height, it squishes inwards
+    //  I've got an image in test/fixtures that's over 900px high with the X of metre and seconds axis on 45px rather than 50px, also the degrees axis is in a different place
+    //  We need to locate the y and x axes dynamically rather than with a hard-coded value
+    //  This is handled below
 
     // Build details on the axes
     // From 544,314 to 544,67
     // NOTE unlike the LHS y-axes, this shouldn't change
     directionAxis = {
       min: 0, 
-      max: 360,
-      x: 544,
-      bottomY: 314,
-      topY: 67
+      max: 360
     }
+    // Find direction y axis by going to right of image, 250 down and scanning left for a vertical line 
+    directionAxis.x = getAxisFromRight(gif, gif.logical_screen_width - 30, 250, colours.blue)[0]
+    // Also need to locate the X axis, which is shared with metre
+    // Go in to what could be the center of the top graph and scan down for the line
+    directionAxis.bottomY = getXAxisFromAbove(gif, directionAxis.x - 80, 250, colours.black)[1] - 1
+    // Best get the topY too as it could change
+    // Notice I'm -- the bottomY. Because the x axis has a black pixel there
+    directionAxis.topY = seekUpToNoColour(gif, directionAxis.x, directionAxis.bottomY - 1, colours.blue)[1] + 1 // Add 1 as it returns the 1st non-blue cell
     directionAxis.length = directionAxis.bottomY-directionAxis.topY
     directionAxis.segments = getAxisSegments(gif, directionAxis.x+1, directionAxis.bottomY, directionAxis.topY, colours.blue)
 
@@ -154,11 +217,14 @@ var parseMHLGraph = function(path, cb) {
 
     metreAxis = { 
       min: 0, 
-      max: 8, 
-      x: 50,
-      bottomY: 314
+      max: 8
     }        
-    // Go to 50x and scan upwards from 315y to see when the solid black line
+    // TODO max should be calculated like seconds' max below
+    // Find metre y axis by going 250 down and scanning right for a vertical line
+    metreAxis.x = getAxisFromLeft(gif, 25, 250, colours.black)[0]
+    // Shared with direction
+    metreAxis.bottomY = directionAxis.bottomY
+    // Go to x of y axis and scan upwards from 315y to see when the solid black line
     // finishes and use that y position as the topY
     metreAxis.topY  = seekUpToNoColour(gif, metreAxis.x, metreAxis.bottomY, colours.black)[1] + 1 // Add 1 as it returns the 1st non-black cell
     metreAxis.length = metreAxis.bottomY-directionAxis.topY // NOTE Swapped to direction scale, as we're using that at the moment
@@ -166,9 +232,10 @@ var parseMHLGraph = function(path, cb) {
 
     // Work out seconds axis
     secondAxis = {
-      min: 4, 
-      x: 50
+      min: 4
     }        
+    // Second's is in line with metre
+    secondAxis.x = metreAxis.x
     // The second axis is tricky... it changes the height of the image, changes min and max and so on
     // We need to calculate the bottom of the axis and top
     // First of all, let's go to the bottom of the image and x inwards

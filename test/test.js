@@ -5,9 +5,9 @@ var assert = require('assert')
 describe('parseMHLGraph', function() {
   it("parses the 1st sydney data graph by URL", function(done) {
     parseMHLGraph('http://dl.dropbox.com/u/1614309/MHL%20repo/syddir-1.gif', function(conditions) {
-      assert.equal(conditions.direction, 138.46) // Degrees true north
-      assert.equal(conditions.hmax, 1.75) // Metres
-      assert.equal(conditions.hsig, 0.97) // Metres
+      assert.equal(conditions.direction, 137.56) // Degrees true north
+      assert.equal(conditions.hmax, 1.72) // Metres
+      assert.equal(conditions.hsig, 0.94) // Metres
       assert.equal(conditions.tp1, 5.1) // Seconds
       assert.equal(conditions.tsig, 5.94) // Seconds
 
@@ -17,9 +17,9 @@ describe('parseMHLGraph', function() {
 
   it("parses the 1st sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
-      assert.equal(conditions.direction, 138.46) // Degrees true north
-      assert.equal(conditions.hmax, 1.75) // Metres
-      assert.equal(conditions.hsig, 0.97) // Metres
+      assert.equal(conditions.direction, 137.56) // Degrees true north
+      assert.equal(conditions.hmax, 1.72) // Metres
+      assert.equal(conditions.hsig, 0.94) // Metres
       assert.equal(conditions.tp1, 5.1) // Seconds
       assert.equal(conditions.tsig, 5.94) // Seconds
 
@@ -29,8 +29,8 @@ describe('parseMHLGraph', function() {
 
   it("parses the 2nd sydney data graph", function(done) {
     parseMHLGraph('./test/fixtures/syddir-2.gif', function(conditions) {
-      assert.equal(conditions.direction, 183.64)
-      assert.equal(conditions.hmax, 3.21)
+      assert.equal(conditions.direction, 184.39)
+      assert.equal(conditions.hmax, 3.22)
       assert.equal(conditions.hsig, 1.85)
       assert.equal(conditions.tp1, 5.77)
       assert.equal(conditions.tsig, 5.65)
@@ -94,6 +94,18 @@ describe('parseMHLGraph', function() {
       assert.equal(conditions.hsig, 2.88)
       assert.equal(conditions.tp1, 8.52)
       assert.equal(conditions.tsig, 7.97)
+
+      done()
+    })
+  })
+
+  it("parses the gnarly eden data graph", function(done) {
+    parseMHLGraph('./test/fixtures/eden-2.gif', function(conditions) {
+      assert.equal(conditions.direction, 228.65)
+      assert.equal(conditions.hmax, 2.45)
+      assert.equal(conditions.hsig, 1.51)
+      assert.equal(conditions.tp1, 4.94)
+      assert.equal(conditions.tsig, 6.84)
 
       done()
     })
