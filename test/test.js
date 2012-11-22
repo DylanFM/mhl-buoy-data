@@ -4,7 +4,7 @@ var assert = require('assert')
 
 describe('parseMHLGraph', function() {
   //it("parses the 1st sydney data graph by URL", function(done) {
-  //  parseMHLGraph('http://dl.dropbox.com/u/1614309/MHL%20repo/syddir-1.gif', function(conditions) {
+  //  parseMHLGraph('http://dl.dropbox.com/u/1614309/MHL%20repo/syddir-1.gif', function(err, conditions) {
   //    assert.equal(conditions.direction, 138.5) // Degrees true north
   //    assert.equal(conditions.hmax, 1.8) // Metres
   //    assert.equal(conditions.hsig, 1.0) // Metres
@@ -16,7 +16,7 @@ describe('parseMHLGraph', function() {
   //})
 
   it("parses the 1st sydney data graph", function(done) {
-    parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/syddir-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 138.5) // Degrees true north
       assert.equal(conditions.hmax, 1.8) // Metres
       assert.equal(conditions.hsig, 1.0) // Metres
@@ -28,7 +28,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the 2nd sydney data graph", function(done) {
-    parseMHLGraph('./test/fixtures/syddir-2.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/syddir-2.gif', function(err, conditions) {
       assert.equal(conditions.direction, 185.1)
       assert.equal(conditions.hmax, 3.2)
       assert.equal(conditions.hsig, 1.9)
@@ -40,7 +40,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the kembla data graph", function(done) {
-    parseMHLGraph('./test/fixtures/kembla-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/kembla-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 168.4)
       assert.equal(conditions.hmax, 2.7)
       assert.equal(conditions.hsig, 1.5)
@@ -52,7 +52,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the bateman data graph", function(done) {
-    parseMHLGraph('./test/fixtures/batman-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/batman-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 182.9)
       assert.equal(conditions.hmax, 4.3)
       assert.equal(conditions.hsig, 2.2)
@@ -64,7 +64,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the byron data graph", function(done) {
-    parseMHLGraph('./test/fixtures/byron-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/byron-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 103.1)
       assert.equal(conditions.hmax, 1.8)
       assert.equal(conditions.hsig, 1.1)
@@ -76,7 +76,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the coffs data graph", function(done) {
-    parseMHLGraph('./test/fixtures/coffs-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/coffs-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 161.1)
       assert.equal(conditions.hmax, 3.5)
       assert.equal(conditions.hsig, 1.9)
@@ -88,7 +88,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the eden data graph", function(done) {
-    parseMHLGraph('./test/fixtures/eden-1.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/eden-1.gif', function(err, conditions) {
       assert.equal(conditions.direction, 133.5)
       assert.equal(conditions.hmax, 5.2)
       assert.equal(conditions.hsig, 2.9)
@@ -100,7 +100,7 @@ describe('parseMHLGraph', function() {
   })
 
   it("parses the gnarly eden data graph", function(done) {
-    parseMHLGraph('./test/fixtures/eden-2.gif', function(conditions) {
+    parseMHLGraph('./test/fixtures/eden-2.gif', function(err, conditions) {
       assert.equal(conditions.direction, 229.2)
       assert.equal(conditions.hmax, 2.5)
       assert.equal(conditions.hsig, 1.5)
@@ -110,11 +110,24 @@ describe('parseMHLGraph', function() {
       done()
     })
   })
+
+  // Test failure
+  it("it doesn't parse the pretty gif", function(done) {
+    parseMHLGraph('./test/fixtures/pretty.gif', function(err, conditions) {
+
+      assert(err)
+      assert(!conditions)
+
+      done()
+    })
+  })
 })
 
 describe('parseGif', function() {
   it("should return pretty gif data", function(done) {
-    parseGif('./test/fixtures/pretty.gif', function(gif) {
+    parseGif('./test/fixtures/pretty.gif', function(err, gif) {
+
+      assert(!err)
 
       assert.equal(gif.signature, 'GIF')
       assert.equal(gif.version, '89a')
@@ -156,7 +169,9 @@ describe('parseGif', function() {
   })
 
   it("should return wikipedia gif data", function(done) {
-    parseGif('./test/fixtures/rainbow.gif', function(gif) {
+    parseGif('./test/fixtures/rainbow.gif', function(err, gif) {
+
+      assert(!err)
 
       assert.equal(gif.signature, 'GIF')
       assert.equal(gif.version, '89a')
