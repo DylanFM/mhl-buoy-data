@@ -41,7 +41,7 @@ var parseMHLGraph = require('mhl-buoy-data')
 var assert        = require('assert')
 
 // You can pass a path to a local gif, or a URL
-parseMHLGraph('./test/fixtures/syddir-1.gif', function(conditions) {
+parseMHLGraph('./test/fixtures/syddir-1.gif', function(err, conditions) {
   assert.equal(conditions.direction, 138.46) // Degrees true north
   assert.equal(conditions.hmax, 1.75)        // Metres
   assert.equal(conditions.hsig, 0.97)        // Metres
