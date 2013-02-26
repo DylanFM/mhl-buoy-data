@@ -205,6 +205,12 @@ var parseMHLGraph = function(path, cb) {
         throw new Error('Colours are missing')
       }
 
+      // If it's too short in height, complain
+      if (gif.logical_screen_height < 300 || gif.logical_screen_width < 300) {
+        // Should be much larger than 300x300
+        throw new Error('Too small to be a MHL graph')
+      }
+
       // Image size and axis locations:
       //  I appears that when the image gets to a certain height, it squishes inwards
       //  I've got an image in test/fixtures that's over 900px high with the X of metre and seconds axis on 45px rather than 50px, also the degrees axis is in a different place
