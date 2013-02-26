@@ -1,6 +1,6 @@
 {
   "name": "mhl-buoy-data",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "MHL buoys track swell conditions off the coast of NSW Australia. This will parse their GIF graphs so the data can be used in other ways",
   "main": "index.js",
   "scripts": {
