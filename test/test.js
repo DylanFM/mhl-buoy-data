@@ -111,6 +111,16 @@ describe('parseMHLGraph', function() {
     })
   })
 
+  it("returns an error for the empty Eden gif", function(done) {
+    parseMHLGraph('./test/fixtures/eden-3.gif', function(err, conditions) {
+
+      assert(err)
+      assert(!conditions)
+      
+      done()
+    })
+  })
+
   // Test failure
   it("it doesn't parse the pretty gif", function(done) {
     parseMHLGraph('./test/fixtures/pretty.gif', function(err, conditions) {

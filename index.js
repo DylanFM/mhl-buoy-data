@@ -88,6 +88,10 @@ var getAxisFromRight = function(gif, x, y, colour) {
     // Seek up from point, reduce x by 1 for next iteration if it occurs
     axis = seekUpForLineOfColour(gif, x--, y, colour)
   } while(!axis && x)
+  // Make a scene if an axis isn't found
+  if (!axis) {
+    throw new Error("Axis couldn't be found")
+  }
   return axis
 }
 
@@ -98,6 +102,10 @@ var getAxisFromLeft = function(gif, x, y, colour) {
     // Seek up from point, increment x for next iteration if it occurs
     axis = seekUpForLineOfColour(gif, x++, y, colour)
   } while(!axis && x < gif.logical_screen_width)
+  // Make a scene if an axis isn't found
+  if (!axis) {
+    throw new Error("Axis couldn't be found")
+  }
   return axis
 }
 
