@@ -20,9 +20,9 @@
   "author": "Dylan Fogarty-MacDonald",
   "license": "MIT",
   "dependencies": {
-    "underscore": "~1.4.2"
+    "underscore": "~1.4.x"
   },
   "devDependencies": {
-    "mocha": "~1.7.0"
+    "mocha": "~1.8.x"
   }
 }
